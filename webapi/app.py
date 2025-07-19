@@ -28,3 +28,7 @@ def upload():
 @app.route("/", methods=["GET"])
 def index():
     return "EnoProtokollServer API bereit", 200
+
+# 👉 DAS IST WICHTIG:
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
