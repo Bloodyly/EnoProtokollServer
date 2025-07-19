@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  flaskapi:
+    build: ./webapi
+    container_name: flaskapi
+    ports:
+      - "5000:5000"
+    volumes:
+      - shared_data:/app/shared
+    networks:
+      - backend
+
+  samba:
+    image: dperson/samba
+    container_name: samba
+    command: -u "smbuser;pass1234" -s "shared;/mount;yes;no;no;smbuser" 
+    ports:
+      - "445:445"
+      - "139:139"
+    volumes:
+      - shared_data:/mount
+    networks:
+      - backend
+
+volumes:
+  shared_data:
+
+networks:
+  backend:
