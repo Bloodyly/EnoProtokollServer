@@ -13,7 +13,7 @@ services:
     networks:
       - backend
       
-  flaskapi:
+  AdminPanel:
     build: ./adminpanel
     enviroment:
       ADMIN_LOGIN: "admin"  
