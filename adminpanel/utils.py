@@ -59,7 +59,8 @@ def refresh_data():
         # 📄 Alle Objekte (Sheets) analysieren
         objekte = []
         for sheet_name in wb.sheetnames:
-            sheet = str(sheet["B4"].value).strip()
+            sheet = wb[sheet_name]
+            objekt_name = str(sheet["B4"].value).strip() if sheet["B4"].value else sheet_name.strip()
             melder_summe = 0
             meldegruppen = 0
 
@@ -74,7 +75,7 @@ def refresh_data():
                     continue
 
             objekte.append({
-                "name": sheet_name.strip(),
+                "name": objekt_name,
                 "melder_anzahl": melder_summe,
                 "melder_ausgeloest": 0,
                 "meldegruppen": meldegruppen

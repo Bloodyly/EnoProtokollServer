@@ -1,5 +1,5 @@
 from flask import Flask, render_template, send_from_directory
-from utils import ensure_data_json  # wenn du es ausgelagert hast
+from utils.py import ensure_data_json  # wenn du es ausgelagert hast
 import os
 import json
 
