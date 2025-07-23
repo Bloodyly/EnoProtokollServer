@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Adminpanel{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+</head>
+<body>
+
+    <div class="sidebar">
+        <h4>Navigation</h4>
+        <a href="{{ url_for('index') }}" class="{% if request.path == '/' %}active{% endif %}">Dashboard</a>
+        <a href="#">Auslöselisten</a>
+        <a href="#">Protokolle</a>
+        <a href="#">Benutzer</a>
+        <a href="#">Erstellen</a>
+    </div>
+
+    <div class="content">
+        <div class="topbar">Auslöseprotokoll Server</div>
+
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            <div class="alert alert-info mt-2">{{ messages[0] }}</div>
+          {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </div>
+
+    <script src="{{ url_for('static', filename='bootstrap/bootstrap.bundle.min.js') }}"></script>
+</body>
+</html>

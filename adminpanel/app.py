@@ -1,0 +1,63 @@
+from flask import Flask, render_template, send_from_directory
+from utils import ensure_data_json  # wenn du es ausgelagert hast
+import os
+import json
+
+app = Flask(__name__)
+ensure_data_json()
+refresh_data()
+update_ausgeloest()
+
+SHARED_PATH = "/app/shared/"
+DATA_PATH ="/app/shared/data.json"
+
+def get_dashboard_stats():
+    if not os.path.exists(DATA_PATH):
+        return {}
+
+    with open(DATA_PATH, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    listen = len(data["vn"])
+    protokolle = len(os.listdir(PROTOKOLL_DIR)) if os.path.exists(PROTOKOLL_DIR) else 0
+    anlagen = 0
+    meldegruppen = 0
+    melder = 0
+    ausgelöst = 0
+
+    for eintrag in data["vn"]:
+        for obj in eintrag["objekte"]:
+            anlagen += 1
+            meldegruppen += obj.get("meldegruppen", 0)
+            melder += obj.get("melder_anzahl", 0)
+            ausgelöst += obj.get("melder_ausgeloest", 0)
+
+    return {
+        "listen": listen,
+        "protokolle": protokolle,
+        "anlagen": anlagen,
+        "meldegruppen": meldegruppen,
+        "melder": melder,
+        "ausgeloest": ausgelöst
+    }
+    
+#----------------------------------------#
+# App Routes ----------------------------#
+#----------------------------------------#
+
+@app.route("/")
+def index():
+    stats = get_dashboard_stats()
+    return render_template("index.html", stats=stats)
+
+@app.route("/protokolle")
+def show_protokolle():
+    protokoll_dir = os.path.join(SHARED_PATH, "Protokolle")
+    files = os.listdir(protokoll_dir)
+    files = [f for f in files if f.endswith(".xlsx")]
+    return render_template("protokolle.html", files=files)
+
+@app.route("/protokolle/download/<filename>")
+def download_file(filename):
+    return send_from_directory(os.path.join(SHARED_PATH, "Protokolle"), filename)
+

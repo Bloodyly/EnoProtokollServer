@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap.min.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-light">
+  <div class="container mt-4">
+    <h1 class="mb-4">📊 Dashboard</h1>
+
+    <div class="row">
+      {% for label, value in stats.items() %}
+      <div class="col-md-4 mb-3">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title text-primary">{{ label | capitalize }}</h5>
+            <p class="card-text display-6">{{ value }}</p>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <canvas id="overviewChart" height="100"></canvas>
+  </div>
+
+  <script>
+    const ctx = document.getElementById('overviewChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['Listen', 'Protokolle', 'Anlagen', 'Meldegruppen', 'Melder', 'Ausgelöst'],
+        datasets: [{
+          label: 'Übersicht',
+          data: [
+            {{ stats.listen }},
+            {{ stats.protokolle }},
+            {{ stats.anlagen }},
+            {{ stats.meldegruppen }},
+            {{ stats.melder }},
+            {{ stats.ausgeloest }}
+          ],
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            beginAtZero: true
+          }
+        }
+      }
+    });
+  </script>
+</body>
+</html>
