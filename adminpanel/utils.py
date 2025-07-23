@@ -108,7 +108,16 @@ def update_ausgeloest():
         data = json.load(f)
 
     updated_vn_count = 0
-
+    
+    if not os.path.exists(PROTOKOLL_DIR):
+        print(f"[WARN] Verzeichnis {PROTOKOLL_DIR} nicht gefunden – keine Protokolle zum Auslesen.")
+        return
+    
+    protokolle = [f for f in os.listdir(PROTOKOLL_DIR) if f.endswith(".xlsx")]
+    if not protokolle:
+        print(f"[INFO] Keine .xlsx-Protokolle im Verzeichnis {PROTOKOLL_DIR} gefunden.")
+        return
+        
     for filename in os.listdir(PROTOKOLL_DIR):
         if not filename.endswith(".xlsx"):
             continue

@@ -61,3 +61,5 @@ def show_protokolle():
 def download_file(filename):
     return send_from_directory(os.path.join(SHARED_PATH, "Protokolle"), filename)
 
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
