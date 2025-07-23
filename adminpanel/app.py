@@ -8,8 +8,14 @@ ensure_data_json()
 refresh_data()
 update_ausgeloest()
 
-SHARED_PATH = "/app/shared/"
+# Pfade definieren
+SHARED_PATH = "/app/shared"
 DATA_PATH ="/app/shared/data.json"
+EXPOSED_FOLDER = os.path.join(SHARED_FOLDER, "Exposed")
+LISTEN_DIR = os.path.join(EXPOSED_FOLDER, "Listen")
+PROTOKOLL_DIR = os.path.join(EXPOSED_FOLDER, "Protokolle")
+ARCHIV_DIR = os.path.join(EXPOSED_FOLDER, "Archiv")
+DATA_PATH = os.path.join(SHARED_FOLDER, "data.json")
 
 def get_dashboard_stats():
     if not os.path.exists(DATA_PATH):
@@ -52,14 +58,13 @@ def index():
 
 @app.route("/protokolle")
 def show_protokolle():
-    protokoll_dir = os.path.join(SHARED_PATH, "Protokolle")
-    files = os.listdir(protokoll_dir)
+    files = os.listdir(PROTOKOLL_DIR)
     files = [f for f in files if f.endswith(".xlsx")]
     return render_template("protokolle.html", files=files)
 
 @app.route("/protokolle/download/<filename>")
 def download_file(filename):
-    return send_from_directory(os.path.join(SHARED_PATH, "Protokolle"), filename)
+    return send_from_directory(os.path.join(PROTOKOLL_DIR), filename)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
