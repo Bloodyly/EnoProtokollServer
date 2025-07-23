@@ -4,7 +4,7 @@ import os
 import json
 import openpyxl
 from datetime import datetime
-from .crypto_utils.py import decrypt_payload, encrypt_payload  # 🔐 
+from .crypto_utils import decrypt_payload, encrypt_payload # 🔐 
 #from .protokoll_builder import compose_response_structure    # 📄 eigene Logik
 from werkzeug.exceptions import BadRequest
 from cryptography.fernet import Fernet
