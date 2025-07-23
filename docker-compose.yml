@@ -3,8 +3,8 @@ version: '3.8'
 services:
   flaskapi:
     build: ./webapi
-    enviroment:
-      PRIVATE_KEY_BASE64: "ZGVpbmVpbnNpY2hlck1laXN0ZWdlbg=="  # ← Beispiel (Base64)
+    environment:  # ✅ richtig
+      PRIVATE_KEY_BASE64: "ZGVpbmVpbnNpY2hlck1laXN0ZWdlbg=="
     container_name: flaskapi
     ports:
       - "5000:5000"
@@ -12,20 +12,19 @@ services:
       - shared_data:/app/shared
     networks:
       - backend
-      
+
   adminpanel:
     build: ./adminpanel
-    enviroment:
-      ADMIN_LOGIN: "admin"  
+    environment:  # ✅ richtig
+      ADMIN_LOGIN: "admin"
       ADMIN_PASS: "ad-123456"
-    container_name: flaskapi
+    container_name: adminpanel  # 🔧 sollte nicht doppelt flaskapi heißen
     ports:
       - "5080:5000"
     volumes:
       - shared_data:/app/shared
     networks:
       - backend
-
 
   samba:
     image: dperson/samba
