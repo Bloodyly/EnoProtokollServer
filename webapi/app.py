@@ -23,7 +23,7 @@ def ensure_shared_structure():
     os.makedirs(SHARED_FOLDER, exist_ok=True)
     os.makedirs(EXPOSED_FOLDER, exist_ok=True)
     for folder in REQUIRED_FOLDERS:
-        path = os.path.join(EXPOSED, folder)
+        path = os.path.join(EXPOSED_FOLDER, folder)
         os.makedirs(path, exist_ok=True)
         
 def ensure_default_users_file():
