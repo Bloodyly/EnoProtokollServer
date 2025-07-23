@@ -11,11 +11,11 @@ update_ausgeloest()
 # Pfade definieren
 SHARED_PATH = "/app/shared"
 DATA_PATH ="/app/shared/data.json"
-EXPOSED_FOLDER = os.path.join(SHARED_FOLDER, "Exposed")
+EXPOSED_FOLDER = os.path.join(SHARED_PATH, "Exposed")
 LISTEN_DIR = os.path.join(EXPOSED_FOLDER, "Listen")
 PROTOKOLL_DIR = os.path.join(EXPOSED_FOLDER, "Protokolle")
 ARCHIV_DIR = os.path.join(EXPOSED_FOLDER, "Archiv")
-DATA_PATH = os.path.join(SHARED_FOLDER, "data.json")
+DATA_PATH = os.path.join(SHARED_PATH, "data.json")
 
 def get_dashboard_stats():
     if not os.path.exists(DATA_PATH):
