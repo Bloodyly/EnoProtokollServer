@@ -3,8 +3,8 @@ import json
 from datetime import datetime
 from openpyxl import load_workbook
 
-LISTEN_DIR = "app/shared/exposed/Listen"
-PROTOKOLL_DIR = "app/shared/exposed/Protokolle"
+LISTEN_DIR = "app/shared/Exposed/Listen"
+PROTOKOLL_DIR = "app/shared/Exposed/Protokolle"
 DATA_PATH = "/app/shared/data.json"
 
 def ensure_data_json():
