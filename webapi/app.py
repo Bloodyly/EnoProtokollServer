@@ -109,3 +109,5 @@ def index():
 ensure_shared_structure()
 ensure_default_users_file()
 
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
