@@ -30,7 +30,7 @@ services:
   samba:
     image: dperson/samba
     container_name: samba
-    command: -u "smbuser;pass1234" -s "Expose;/mount/Expose;yes;no;no;smbuser"
+    command: -u "smbuser;pass1234" -s "Exposed;/mount/Exposed;yes;no;no;smbuser"
     ports:
       - "445:445"
       - "139:139"
