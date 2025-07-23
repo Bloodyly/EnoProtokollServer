@@ -11,7 +11,7 @@ update_ausgeloest()
 # Pfade definieren
 SHARED_PATH = "/app/shared"
 DATA_PATH ="/app/shared/data.json"
-EXPOSED_FOLDER = os.path.join(SHARED_PATH, "Exposed")
+EXPOSED_FOLDER = os.path.join(SHARED_PATH, "Expose")
 LISTEN_DIR = os.path.join(EXPOSED_FOLDER, "Listen")
 PROTOKOLL_DIR = os.path.join(EXPOSED_FOLDER, "Protokolle")
 ARCHIV_DIR = os.path.join(EXPOSED_FOLDER, "Archiv")
