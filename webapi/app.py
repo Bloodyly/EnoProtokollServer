@@ -103,10 +103,9 @@ def find_excel_by_vn(vn):
 def index():
     return "EnoProtokollServer API bereit", 200
 
-# 👉 DAS IST WICHTIG:
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+
     
 # ✅ Erst jetzt die Initialisierung aufrufen
 ensure_shared_structure()
 ensure_default_users_file()
+
