@@ -12,9 +12,9 @@ import openpyxl
 PRIVATE_KEY = base64.b64decode(os.environ.get("PRIVATE_KEY_BASE64", ""))
 
 app = Flask(__name__)
-SHARED_FOLDER = "/app/shared"
-EXPOSED_FOLDER = "/app/shared/Expose"
-REQUIRED_FOLDERS = ["Listen", "Protokolle", "Archiv"]
+SHARED_FOLDER = "/app/shared/"
+EXPOSED_FOLDER = "/app/shared/Expose/"
+REQUIRED_FOLDERS = ["Listen/", "Protokolle/", "Archiv/"]
 LISTEN_FOLDER = os.path.join(SHARED_FOLDER, "Expose", "Listen")
 PROTOKOLL_FOLDER = os.path.join(SHARED_FOLDER, "Expose", "Protokolle")
 USER_FILE = os.path.join(SHARED_FOLDER, "users.txt")
