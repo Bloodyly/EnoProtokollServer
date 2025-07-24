@@ -2,7 +2,7 @@
 
 {% block content %}
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-	<h1 class="h2">Vertragsübersicht</h2>
+	<h1 class="h2">Vertragsübersicht</h1>
 </div>
 <table class="table table-striped table-hover">
   <thead>
@@ -13,7 +13,7 @@
       <th>Intervall</th>
       <th>Status</th>
       <th>Letzte Bearbeitung</th>
-	  <th>Protokolle<th>
+	  <th>Protokolle</th>
     </tr>
   </thead>
   <tbody>
@@ -21,8 +21,21 @@
     <tr>
       <td><a href="/vertraege?vn={{ eintrag.vn_nr }}">{{ eintrag.vn_nr }}</a></td>
       <td>{{ eintrag.kunde }}</td>
-      <td>{{ eintrag.wartung }}</td>
-      <td>{{ eintrag.status }}</td>
+      <td>
+		{% for objekt in eintrag.objekte %}
+		{{ objekt.name}}<br>
+		{% endfor %}
+	  </td>
+	  <td>
+		{% for objekt in eintrag.objekte %}
+		{{ objekt.intervall}}<br>
+		{% endfor %}
+	  </td>
+      <td>
+	    {% for objekt in eintrag.objekte %}
+		{{ objekt.status}}<br>
+		{% endfor %}
+	   </td>
       <td>{{ eintrag.letzte_bearbeitung }}</td>
     </tr>
     {% endfor %}
