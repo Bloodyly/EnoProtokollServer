@@ -4,6 +4,9 @@ import logging
 from datetime import datetime
 from openpyxl import load_workbook
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 LISTEN_DIR = "app/shared/Exposed/Listen"
 PROTOKOLL_DIR = "app/shared/Exposed/Protokolle"
 DATA_PATH = "/app/shared/data.json"

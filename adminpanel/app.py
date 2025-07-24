@@ -5,6 +5,8 @@ import json
 import logging
 app = Flask(__name__)
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Pfade definieren
 SHARED_PATH = "/app/shared"
