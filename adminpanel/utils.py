@@ -7,8 +7,8 @@ from openpyxl import load_workbook
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-LISTEN_DIR = "app/shared/Exposed/Listen"
-PROTOKOLL_DIR = "app/shared/Exposed/Protokolle"
+LISTEN_DIR = "app/shared/Expose/Listen"
+PROTOKOLL_DIR = "app/shared/Expose/Protokolle"
 DATA_PATH = "/app/shared/data.json"
 
 def ensure_data_json():
