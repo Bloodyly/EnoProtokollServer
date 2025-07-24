@@ -19,7 +19,7 @@
   <tbody>
     {% for eintrag in vertragsdaten %}
     <tr>
-      <td>{{ eintrag.vn_nr }}</td>
+      <td><a href="/vertraege?vn={{ eintrag.vn_nr }}">{{ eintrag.vn_nr }}</a></td>
       <td>{{ eintrag.kunde }}</td>
       <td>{{ eintrag.wartung }}</td>
       <td>{{ eintrag.status }}</td>

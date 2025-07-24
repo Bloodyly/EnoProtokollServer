@@ -99,18 +99,27 @@ def logout():
 @login_required
 def vertraege():
     data = load_data_json()
-    return render_template("vertraege.html", active_page="vertraege")
+    vn_nr = request.args.get("vn")
+    selected_vn = None
+    
+    if vn_nr:
+        selected_vn = next((vn for vn in data.get("vn", []) if vn["vn_nr"] == vn_nr), None)
+
+    return render_template(
+        "vertraege.html",
+        vertragsdaten=data.get("vn", []),
+        selected_vn=selected_vn,
+        active_page="vertraege"
+        )
 
 @app.route("/archiv")
 @login_required
 def archiv():
-    data = load_data_json()
     return render_template("archiv.html", active_page="archiv")
 
 @app.route("/statistiken")
 @login_required
 def statistiken():
-    data = load_data_json()
     return render_template("statistiken.html", active_page="statistiken")
 
 @app.route("/user")
