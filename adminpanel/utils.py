@@ -1,5 +1,6 @@
 import os
 import json
+import logging
 from datetime import datetime
 from openpyxl import load_workbook
 
@@ -20,12 +21,13 @@ def refresh_data():
 
     if not os.path.exists(LISTEN_DIR):
         print(f"[WARN] Verzeichnis {LISTEN_DIR} nicht gefunden.")
+        logger.warning("listenverzeichniss nicht gefunden")
         return
 
     for filename in os.listdir(LISTEN_DIR):
         if not filename.endswith(".xlsx"):
             continue
-
+        logger.warning("file found")
         file_path = os.path.join(LISTEN_DIR, filename)
         wb = load_workbook(file_path)
 
@@ -41,10 +43,12 @@ def refresh_data():
             wartung = str(sheet["B3"].value).strip()
         except Exception as e:
             print(f"[WARN] Fehler beim Lesen von {filename}: {e}")
+            logger.warning("Fehler beim lesen")
             continue
 
         if not vn_nr or not kunde:
             print(f"[WARN] Datei {filename} enthält keine gültigen Meta-Informationen.")
+            logger.warning("datei enthält keine metadaten")
             continue
 
         # 🕒 Quartal bestimmen
@@ -97,10 +101,12 @@ def refresh_data():
         json.dump(data, f, indent=2, ensure_ascii=False)
 
     print(f"[INFO] {len(data['vn'])} Verträge wurden eingelesen und gespeichert.")
- 
+    logger.warning("verträge eingelesen")
+    
 def update_ausgeloest():
     if not os.path.exists(DATA_PATH):
         print("[WARN] Keine data.json vorhanden – Abbruch.")
+        logger.warning("data.json nicht gefunden")
         return
 
     # Daten einlesen

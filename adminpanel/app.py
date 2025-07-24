@@ -2,7 +2,7 @@ from flask import Flask, render_template, send_from_directory
 from utils import ensure_data_json, refresh_data, update_ausgeloest   # wenn du es ausgelagert hast
 import os
 import json
-
+import logging
 app = Flask(__name__)
 
 
