@@ -69,6 +69,7 @@ def makedb():
     ensure_data_json()
     refresh_data()
     update_ausgeloest()
+    stats = get_dashboard_stats()
     return render_template("index.html", stats=stats)
     
 if __name__ == "__main__":
