@@ -73,7 +73,6 @@ def inject_data():
 @app.route("/")
 @login_required
 def index():
-    stats = get_dashboard_stats()
     return render_template("index.html", active_page="dashboard")
 
 @app.route("/login", methods=["GET", "POST"])
