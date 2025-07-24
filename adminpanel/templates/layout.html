@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    {% include 'partials/head.html' %}
+  </head>
+  <body>
+	{% include 'partials/headers.html' %}  
+
+
+<div class="container-fluid">
+  <div class="row">
+    {% include 'partials/sidebar.html' %}
+
+    <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+{% include 'partials/JSincludes.html' %}
+
+  </body>
+</html>

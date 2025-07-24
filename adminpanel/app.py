@@ -4,9 +4,7 @@ import os
 import json
 
 app = Flask(__name__)
-ensure_data_json()
-refresh_data()
-update_ausgeloest()
+
 
 # Pfade definieren
 SHARED_PATH = "/app/shared"
@@ -66,5 +64,13 @@ def show_protokolle():
 def download_file(filename):
     return send_from_directory(os.path.join(PROTOKOLL_DIR), filename)
 
+@app.route("/makedb")
+def makedb():
+    ensure_data_json()
+    refresh_data()
+    update_ausgeloest()
+    return render_template("index.html", stats=stats)
+    
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
+    
