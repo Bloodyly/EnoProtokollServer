@@ -1,15 +1,23 @@
 {
   "vn": {
-    "VNnr : "123456",
-    "kunde": "Feuerwehr HQ",
-    "wartung": "Quartal",
-    "status": "Q1",
-    "letzte_bearbeitung": "2025-07-16T12:00:00",
-    "objekte": [
+    "VNnr : "123456",					#zeile 1,spalte 2 erstes Sheet
+    "kunde": "Feuerwehr HQ",				#zeile 2,spalte 2
+    "letzte_bearbeitung": "2025-07-16T12:00:00",	#Metainformationen der Datei Selbst
+    "Datei_Name" : "vn1234546-Feuerwehr_HQ-BMA.xlsx"	#Dateiname. auslöseliste liegt im Listenordner, zugehörige erstellte Protokolle heißen genauso liegen aber in dem Ordner Protokolle.
+    "objekte": [					#Jedes Sheet entspricht einem Objekt
       {
-        "name": "Zentrale A",
-        "melder_anzahl": 10,
-        "melder_ausgeloest": 2
+        "name": "Zentrale A",				#Sheet -> Zeile 4, spalte 2
+	"melder_gruppen" : 23,				#spalte a zeile 8 bis zeile X an der nichts mehr steht zählen. -> anzahl der Meldegruppen.
+        "melder_anzahl": 10,				#wird berechnet, summe der werte zeile 8,spalte 2 bis zeile 8+melder_gruppen
+        "melder_ausgeloest": 2,				#Kommt aus der xlsx Datei aus dem Ordner Protokolle. Summe der Felder der Auslöseliste, welche NICHT "n.i.O.","-",oder"" enthalten. 
+	"melder_n.i.O.": 0,				#wird später befüllt
+	"intervall": "Quartal",				#sheet -> zeile 3, spalte 2
+#aktuelle quartal berechnen.
+#wenn Quartal 1, suche Tabelle nach zeile mit "Quartal 1" als Inhalt. dies ist zeile "Wartung_Ausgeführt"
+    	"status": "Q1",					#[aktuelles quartal/halbjahr/Jahr] + [offen, wenn in der Zeile "Wartung Ausgeführt:N kein wert steht.]
+	"wartung_durchfuhrender": ["p.schwellnuß","p.Johl","K.Hintze",""]	# Feld ist je nach wartungs typ 4,2 oder ein Feld lang.	
+	"Wartung_datum":["16.02.2025","23.04.2025","06.06.2025",""]# Feld ist je nach wartungs typ 4,2 oder ein Feld lang.
+#werte stehen entsprechend auf dem sheet an der stelle wo "Wartung Ausgeführt:" gefunden wird. dadrunter die tabellenstruktur ist zeile x, A: welches QuartalHalbjahr/Jahr, spalte D:Ausführender, spalte n: Wartungsdatum.
       }
     ]
   }

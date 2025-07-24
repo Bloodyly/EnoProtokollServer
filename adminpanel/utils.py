@@ -36,14 +36,9 @@ def refresh_data():
 
         # 🧠 Erste Seite analysieren für Meta-Daten
         sheet = wb[wb.sheetnames[0]]
-        kunde = ""
-        vn_nr = ""
-        wartung = "Quartal"  # Standardwert
-
         try:
             vn_nr = str(sheet["B1"].value).strip()
             kunde = str(sheet["B2"].value).strip()
-            wartung = str(sheet["B3"].value).strip()
         except Exception as e:
             print(f"[WARN] Fehler beim Lesen von {filename}: {e}")
             logger.warning("Fehler beim lesen")
@@ -54,23 +49,20 @@ def refresh_data():
             logger.warning("datei enthält keine metadaten")
             continue
 
-        # 🕒 Quartal bestimmen
-        monat = datetime.now().month
-        if wartung == "Quartal":
-            status = f"Q{(monat - 1) // 3 + 1}"
-        elif wartung == "Halbjahr":
-            status = "H1" if monat <= 6 else "H2"
-        else:
-            status = "i.O."
-
         # 📄 Alle Objekte (Sheets) analysieren
         objekte = []
         for sheet_name in wb.sheetnames:
             sheet = wb[sheet_name]
+            
             objekt_name = str(sheet["B4"].value).strip() if sheet["B4"].value else sheet_name.strip()
-            melder_summe = 0
+            intervall = str(sheet["B3"].value).strip() if sheet["B3"].value else "Quartal"
             meldegruppen = 0
-
+            melder_summe = 0
+            melder_ausgelöst = 0
+            melder_nio = 0
+            wartung_durchfuhrender = ["","","",""]
+            wartung_datum = ["","","",""]
+            
             for row in sheet.iter_rows(min_row=8, min_col=2, max_col=2):
                 zelle = row[0].value
                 if zelle is None or str(zelle).strip() == "":
@@ -83,9 +75,14 @@ def refresh_data():
 
             objekte.append({
                 "name": objekt_name,
+                "melder_gruppen":meldegruppen,
                 "melder_anzahl": melder_summe,
-                "melder_ausgeloest": 0,
-                "meldegruppen": meldegruppen
+                "melder_ausgeloest": 0,         #wird in 2. funktion aus anderer datei befüllt
+                "melder_nio": 0,                #wird in 2. funktion aus anderer datei befüllt
+                "intervall": intervall,
+                "status": "",               #wird in 2. funktion aus anderer datei angepasst
+                "wartung_durchfuhrender":wartung_durchfuhrender, #wird in 2. funktion aus anderer datei befüllt
+                "wartung_datum":wartung_datum #wird in 2. funktion aus anderer datei befüllt
             })
 
         # 🧾 In Struktur eintragen
@@ -93,8 +90,6 @@ def refresh_data():
             "vn_nr": vn_nr,
             "kunde": kunde,
             "filename" : filename,
-            "wartung": wartung,
-            "status": status,
             "letzte_bearbeitung": datetime.now().isoformat(),
             "objekte": objekte
         })
@@ -106,77 +101,91 @@ def refresh_data():
     print(f"[INFO] {len(data['vn'])} Verträge wurden eingelesen und gespeichert.")
     logger.warning("verträge eingelesen")
     
-def update_ausgeloest():
+def update_from_protokolle():
     if not os.path.exists(DATA_PATH):
         print("[WARN] Keine data.json vorhanden – Abbruch.")
-        logger.warning("data.json nicht gefunden")
         return
 
-    # Daten einlesen
     with open(DATA_PATH, "r", encoding="utf-8") as f:
         data = json.load(f)
 
-    updated_vn_count = 0
-    
-    if not os.path.exists(PROTOKOLL_DIR):
-        print(f"[WARN] Verzeichnis {PROTOKOLL_DIR} nicht gefunden – keine Protokolle zum Auslesen.")
-        return
-    
-    protokolle = [f for f in os.listdir(PROTOKOLL_DIR) if f.endswith(".xlsx")]
-    if not protokolle:
-        print(f"[INFO] Keine .xlsx-Protokolle im Verzeichnis {PROTOKOLL_DIR} gefunden.")
-        return
-        
-    for filename in os.listdir(PROTOKOLL_DIR):
-        if not filename.endswith(".xlsx"):
+    updated = 0
+
+    for vn in data["vn"]:
+        protokoll_path = os.path.join(PROTOKOLL_DIR, vn["filename"])
+        if not os.path.exists(protokoll_path):
+            print(f"[INFO] Kein Protokoll für {vn['vn_nr']} vorhanden.")
             continue
 
-        file_path = os.path.join(PROTOKOLL_DIR, filename)
         try:
-            wb = load_workbook(file_path)
+            wb = load_workbook(protokoll_path)
         except Exception as e:
-            print(f"[ERROR] Fehler beim Laden von {filename}: {e}")
+            print(f"[ERROR] Protokoll {vn['filename']} konnte nicht geladen werden: {e}")
             continue
 
-        # VN aus Inhalt extrahieren
-        sheet = wb[wb.sheetnames[0]]
-        try: 
-            vn_nr = str(sheet["B1"].value).strip()
-        except Exception as e:
-            vn_nr = ""
-        
-        if not vn_nr:
-            print(f"[WARN] Vertragsnummer in {filename} nicht gefunden.")
-            continue
-
-        # Suche nach passender VN in data.json
-        vn_eintrag = next((vn for vn in data["vn"] if vn["vn_nr"] == vn_nr), None)
-        if not vn_eintrag:
-            print(f"[WARN] VN {vn_nr} aus {filename} nicht in data.json vorhanden.")
-            continue
-
-        # Update pro Objekt/Sheet
-        for sheet_name in wb.sheetnames:
-            if sheet_name not in [obj["name"] for obj in vn_eintrag["objekte"]]:
+        for obj in vn["objekte"]:
+            if obj["name"] not in wb.sheetnames:
+                print(f"[WARN] Objekt {obj['name']} nicht in Protokoll {vn['filename']} gefunden.")
                 continue
 
-            ws = wb[sheet_name]
-            count = 0
-            for row in ws.iter_rows(min_row=8):
-                for cell in row[3:]:  # ab Spalte D (Index 3)
-                    value = str(cell.value).strip() if cell.value is not None else ""
-                    if value in ("Q1", "Q2", "Q3", "Q4", "H1", "H2", "i.O.", "n.i.O."):
-                        count += 1
+            ws = wb[obj["name"]]
 
-            for obj in vn_eintrag["objekte"]:
-                if obj["name"] == sheet_name:
-                    obj["melder_ausgeloest"] = count
+            # 🔢 Zähle ausgelöste Melder (ab Spalte D, Zeile 8+)
+            ausgelöst = 0
+            nio = 0
+            for row in ws.iter_rows(min_row=8):
+                for cell in row[3:]:  # Spalte D (Index 3)
+                    value = str(cell.value).strip() if cell.value else ""
+                    if value in ("Q1", "Q2", "Q3", "Q4", "H1", "H2", "i.O."):
+                        ausgelöst += 1
+                    elif value == "n.i.O.":
+                        nio += 1
+
+            obj["melder_ausgeloest"] = ausgelöst
+            obj["melder_nio"] = nio
+
+            # 📅 Wartungsinfos suchen (Zelle mit Inhalt "Wartung Ausgeführt:")
+            for i, row in enumerate(ws.iter_rows(values_only=True), start=1):
+                if row[0] and "Wartung Ausgeführt" in str(row[0]):
+                    info_start = i + 1
+                    break
+            else:
+                info_start = None
+
+            durchfuehrende = ["", "", "", ""]
+            daten = ["", "", "", ""]
+            if info_start:
+                for idx, row in enumerate(ws.iter_rows(min_row=info_start, max_row=info_start+3), start=0):
+                    durchfuehrende[idx] = str(row[3]).strip() if row[3] else ""
+                    daten[idx] = str(row[13]).strip() if len(row) > 13 and row[13] else ""
+
+            obj["wartung_durchfuhrender"] = durchfuehrende
+            obj["wartung_datum"] = daten
+
+            # 📌 Status aktualisieren
+            heute = datetime.now()
+            quartal = f"Q{((heute.month - 1) // 3) + 1}"
+            halbjahr = "H1" if heute.month <= 6 else "H2"
+
+            if obj["intervall"] == "Quartal":
+                status_prefix = quartal
+            elif obj["intervall"] == "Halbjahr":
+                status_prefix = halbjahr
+            else:
+                status_prefix = heute.strftime("%Y")
+
+            status_suffix = "offen"
+            for datum in daten:
+                if datum:
+                    status_suffix = "erledigt"
                     break
 
-        updated_vn_count += 1
+            obj["status"] = f"{status_prefix} {status_suffix}"
 
-    # Speichern
+        updated += 1
+
     with open(DATA_PATH, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
 
-    print(f"[INFO] {updated_vn_count} VN-Einträge wurden mit ausgelösten Meldern aktualisiert.")
+    print(f"[INFO] {updated} VN-Einträge mit Protokollen aktualisiert.")
+

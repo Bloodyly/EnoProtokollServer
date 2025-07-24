@@ -1,77 +1,31 @@
-{% extends 'layout.html' %}
-  {% block content %}
-	<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-        <h1 class="h2">Dashboard</h1>
-        <div class="dropdown mb-2 mb-md-0">
-          <button type="button" id="dropdownDateButton" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-            <span data-feather="calendar"></span>
-			<span class="dropdown-text">Diese Woche</span>
-          </button>
-		  <div class="dropdown-menu" aria-labelledby="dropdownDateButton">
-			<a class="dropdown-item" href="#"></span> Diese Woche</a>
-			<a class="dropdown-item" href="#"></span> Dieser Monat</a>
-			<a class="dropdown-item" href="#"></span> Dieses Jahr</a>
-		  </div>
-        </div>
-      </div>
+{% extends "layout.html" %}
 
-      <canvas class="my-4 w-100" id="myChart" width="900" height="380"></canvas>
-
-      <h2>Zuletzt ausgefüllt:</h2>
-      <div class="table-responsive">
-        <table class="table table-striped table-sm">
-          <thead>
-            <tr>
-              <th scope="col">VN#</th>
-              <th scope="col">Kunde</th>
-              <th scope="col">Objekt</th>
-              <th scope="col">Intervall</th>
-              <th scope="col">Download PDF</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>VN123456</td>
-              <td>OFD Finanzamd Dessau Roßlau</td>
-              <td>Pförtner</td>
-              <td>Quartalsweise</td>
-              <td>Q1</td>
-            </tr>
-			<tr>
-              <td>VN123456</td>
-              <td>OFD Finanzamd Dessau Roßlau</td>
-              <td>Verwaltung</td>
-              <td>Quartalsweise</td>
-              <td>Q1</td>
-            </tr>
-            <tr>
-              <td>VN123456</td>
-              <td>OFD Finanzamd Dessau Roßlau</td>
-              <td>Server</td>
-              <td>Quartalsweise</td>
-              <td>Q1</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-	  
-	  
-	  <script>
-	  document.querySelectorAll(".dropdown-menu .dropdown-item").forEach(function(item) {
-		item.addEventListener("click", function(e) {
-		  e.preventDefault();
-		  const newText = this.textContent.trim();
-		  const button = this.closest(".dropdown").querySelector(".dropdown-toggle");
-		  const textSpan = button.querySelector(".dropdown-text");
-		  if (textSpan) {
-			textSpan.textContent = newText;
-		  }
-		});
-	  });
-
-	  // Feather-Icons nach DOM-Änderungen aktualisieren (falls nötig)
-	  if (window.feather) {
-		feather.replace();
-	  }
-	</script>
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+	<h1 class="h2">Vertragsübersicht</h2>
+</div>
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th>VN-Nummer</th>
+      <th>Kunde</th>
+	  <th>Objekt</th>
+      <th>Intervall</th>
+      <th>Status</th>
+      <th>Letzte Bearbeitung</th>
+	  <th>Protokolle<th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for eintrag in vertragsdaten %}
+    <tr>
+      <td>{{ eintrag.vn_nr }}</td>
+      <td>{{ eintrag.kunde }}</td>
+      <td>{{ eintrag.wartung }}</td>
+      <td>{{ eintrag.status }}</td>
+      <td>{{ eintrag.letzte_bearbeitung }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
 {% endblock %}
