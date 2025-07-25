@@ -2,16 +2,12 @@
   {% block content %}
 	<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
         <h1 class="h2">Dashboard</h1>
-        <div class="dropdown mb-2 mb-md-0">
-          <button type="button" id="dropdownDateButton" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-            <span data-feather="calendar"></span>
-			<span class="dropdown-text">Diese Woche</span>
-          </button>
-		  <div class="dropdown-menu" aria-labelledby="dropdownDateButton">
-			<a class="dropdown-item" href="#"></span> Diese Woche</a>
-			<a class="dropdown-item" href="#"></span> Dieser Monat</a>
-			<a class="dropdown-item" href="#"></span> Dieses Jahr</a>
-		  </div>
+        <div>
+			{% if session.user == "admin" %}
+			<div class="alert alert-warning mt-3">
+			<strong>Admin-Hinweis:</strong> Denken Sie daran, regelmäßig die Datenbank zu aktualisieren und die Benutzerverwaltung zu prüfen.
+<			/div>
+			{% endif %}
         </div>
       </div>
 
