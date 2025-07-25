@@ -44,12 +44,6 @@
 <script>
   $(document).ready(function() {
     new DataTable('vertragsTabelle');
-    $('#vertragsTabelle').DataTable({
-      "language": {
-        "url": "{{ url_for('static', filename='de-DE.json') }}"
-      },
-      "pageLength": 25
-    });
   });
 </script>
 
