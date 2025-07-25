@@ -2,15 +2,14 @@
   {% block content %}
 	<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
         <h1 class="h2">Dashboard</h1>
-        <div>
-			{% if session.user == "admin" %}
+      </div>
+	  <div>
+	  	{% if session.user == "admin" %}
 			<div class="alert alert-warning mt-3">
 			<strong>Admin-Hinweis:</strong> Denken Sie daran, regelmäßig die Datenbank zu aktualisieren und die Benutzerverwaltung zu prüfen.
 <			/div>
-			{% endif %}
-        </div>
-      </div>
-
+		{% endif %}
+	  </div>
       <canvas class="my-4 w-100" id="myChart" width="900" height="380"></canvas>
 
       <h2>Zuletzt ausgefüllt:</h2>
