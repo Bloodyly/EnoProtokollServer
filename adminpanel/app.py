@@ -152,7 +152,7 @@ def delete_user():
     username = request.form.get("username")
     if username == "admin":
         flash("Admin kann nicht gelöscht werden.")
-        return redirect(url_for("users"))
+        return redirect(url_for("user"))
 
     users = get_users()
     if username not in users:
