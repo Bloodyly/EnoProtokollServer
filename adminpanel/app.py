@@ -144,7 +144,7 @@ def add_user():
             f.write(f"{username}:{password}\n")
         flash(f"Benutzer '{username}' hinzugefügt.")
 
-    return redirect(url_for("users"))
+    return redirect(url_for("user"))
 
 @app.route("/delete_user", methods=["POST"])
 @login_required
