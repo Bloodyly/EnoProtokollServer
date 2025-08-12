@@ -30,7 +30,13 @@ services:
   samba:
     image: dperson/samba
     container_name: samba
-    command: -u "smbuser;pass1234" -s "Expose;/mount/Expose;yes;no;yes;smbuser"
+    command: >
+      sh -c "
+      mkdir -p /mount/Expose/Listen /mount/Expose/Protokolle /mount/Expose/Archiv &&
+      chown -R 100:101 /mount/Expose &&
+      chmod -R 0775 /mount/Expose &&
+      /usr/bin/samba.sh -u 'smbuser;pass1234' -s 'Expose;/mount/Expose;yes;no;yes;smbuser'
+      "
     ports:
       - "445:445"
       - "139:139"
