@@ -32,7 +32,7 @@ services:
     container_name: samba
     command: >
       sh -c "
-      mkdir -p /mount/Expose/Listen /mount/Expose/Protokolle /mount/Expose/Archiv &&
+      mkdir -p /mount/Expose/Listen /mount/Expose/Protokolle /mount/Expose/Archiv /mount/Expose/Protokolle_PDF &&
       chown -R 100:101 /mount/Expose &&
       chmod -R 0775 /mount/Expose &&
       /usr/bin/samba.sh -u 'smbuser;pass1234' -s 'Expose;/mount/Expose;yes;no;yes;smbuser'
