@@ -5,9 +5,14 @@ from helper import compose_response_structure    # 📄 eigene Logik
 from werkzeug.exceptions import BadRequest
 from cryptography.fernet import Fernet
 import base64
+import configparser
+import threading, 
+import time
 import os
 import json
 import openpyxl
+
+from typing import Optional
 
 PRIVATE_KEY = base64.b64decode(os.environ.get("PRIVATE_KEY_BASE64", ""))
 
@@ -18,6 +23,9 @@ REQUIRED_FOLDERS = ["Listen/", "Protokolle/", "Archiv/"]
 LISTEN_FOLDER = os.path.join(SHARED_FOLDER, "Expose", "Listen")
 PROTOKOLL_FOLDER = os.path.join(SHARED_FOLDER, "Expose", "Protokolle")
 USER_FILE = os.path.join(SHARED_FOLDER, "users.txt")
+CONFIG_PATH = "/app/shared/Expose/config.ini"
+_config_cache = {"mtime": None, "cfg": None}
+_config_lock = threading.Lock()
 
 def ensure_shared_structure():
     os.makedirs(SHARED_FOLDER, exist_ok=True)
@@ -35,6 +43,32 @@ def ensure_default_users_file():
     else:
         print("[INFO] users.txt bereits vorhanden.")
 
+def get_config() -> configparser.ConfigParser:
+    """Liest config.ini mit einfachem Auto-Reload, thread-safe."""
+    global _config_cache
+    with _config_lock:
+        try:
+            mtime = os.path.getmtime(CONFIG_PATH)
+        except FileNotFoundError:
+            mtime = None
+        if _config_cache["cfg"] is not None and _config_cache["mtime"] == mtime:
+            return _config_cache["cfg"]
+
+        cfg = configparser.ConfigParser()
+        # Defaults
+        cfg["server"] = {
+            "response_format": "tsv",
+            "gzip_enabled": "true",
+            "gzip_min_size": "1024",
+            "gzip_level": "5",
+            "max_plain_response_size": "10485760",
+        }
+        # Datei (falls vorhanden) drüberladen
+        if mtime is not None:
+            cfg.read(CONFIG_PATH, encoding="utf-8")
+        _config_cache = {"mtime": mtime, "cfg": cfg}
+        return cfg
+        
 @app.route("/get_protokoll", methods=["POST"])
 def check_request():
     try:
@@ -54,19 +88,36 @@ def check_request():
 
         if not validate_user(username, password):
             return jsonify({"status": "error", "message": "Benutzer oder Passwort ungültig"}), 401
-            
-        #Prüfen der Angefragten datei
-        excel_path = find_excel_by_vn(vn_nr)
-        if not excel_path:
-            return jsonify({"status": "error", "message": f"Keine Datei für VN {vn_nr} gefunden"}), 404
         
+        cfg = get_config()
+        fmt = (cfg["server"].get("response_format", "tsv") or "tsv").lower()
+        if fmt == "json":
+            model = compose_response_structure(vn_nr, None, PROTOKOLL_FOLDER, output="json")
+            plain_bytes = json.dumps(model, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+        else:
+            # default TSV (kompakt)
+            plain_bytes = compose_response_structure(vn_nr, None, PROTOKOLL_FOLDER, output="tsv")
+
+        # Jetzt ggf. GZIP → dann ENCRYPT
+        cipher, was_gzip, original_size = maybe_compress_then_encrypt(plain_bytes, encrypt_payload, PRIVATE_KEY)
+
+                # Wichtig: verschlüsselte Binärantwort, kein Content-Encoding setzen
+        # (das würde sich auf die verschlüsselte Nutzlast beziehen und ist wirkungslos)
+        resp = Response(cipher, status=200, mimetype="application/octet-stream")
+        # Meta-Hinweise für den Client:
+        # 1) sagt: die ENTschlüsselte Nutzlast ist gzip-komprimiert
+        if was_gzip:
+            resp.headers["X-Content-Compressed"] = "gzip"
+        # 2) für Debug/Monitoring:
+        resp.headers["X-Original-Size"] = str(original_size)
+        resp.headers["X-Format"] = fmt  # "tsv" oder "json"
+        # Damit Caches/Proxies auf Clientseite nicht kaputt gehen:
+        resp.headers["Cache-Control"] = "no-store"
+        return resp
+ 
         # ✨ TSV erzeugen (bytes)
-        tsv_bytes = compose_response_structure(vn_nr, PROTOKOLL_FOLDER, LISTEN_FOLDER, output="tsv")
 
         # 🔐 verschlüsseln; encrypt_payload erwartet str|bytes → hier bytes
-        encrypted_response = encrypt_payload(tsv_bytes, PRIVATE_KEY_PATH)
-
-        return encrypted_response, 200
 
     except (json.JSONDecodeError, UnicodeDecodeError, ValueError) as e:
         # 👇 passiert bei falschem Key
