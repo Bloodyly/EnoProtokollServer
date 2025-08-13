@@ -1,7 +1,7 @@
-from flask import Flask, request, current_app
+from flask import Flask, request, response, jsonify, current_app
 from datetime import datetime
 from crypto_utils import decrypt_payload, encrypt_payload # 🔐 
-#from .protokoll_builder import compose_response_structure    # 📄 eigene Logik
+from helper import compose_response_structure    # 📄 eigene Logik
 from werkzeug.exceptions import BadRequest
 from cryptography.fernet import Fernet
 import base64
@@ -60,9 +60,11 @@ def check_request():
         if not excel_path:
             return jsonify({"status": "error", "message": f"Keine Datei für VN {vn_nr} gefunden"}), 404
         
-        protokoll_data = compose_response_structure(vn_nr, excel_path, PROTOKOLL_FOLDER)
+        # ✨ TSV erzeugen (bytes)
+        tsv_bytes = compose_response_structure(vn_nr, PROTOKOLL_FOLDER, LISTEN_FOLDER, output="tsv")
 
-        encrypted_response = encrypt_payload(json.dumps(protokoll_data), PRIVATE_KEY_PATH)
+        # 🔐 verschlüsseln; encrypt_payload erwartet str|bytes → hier bytes
+        encrypted_response = encrypt_payload(tsv_bytes, PRIVATE_KEY_PATH)
 
         return encrypted_response, 200
 
