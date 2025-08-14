@@ -1,4 +1,4 @@
-from flask import Flask, request, response, jsonify
+from flask import Flask, request, jsonify, Response
 from crypto_utils import decrypt_payload, encrypt_payload # 🔐 
 from helper import compose_response_structure, maybe_compress_then_encrypt  # 📄 eigene Logik
 from werkzeug.exceptions import BadRequest
