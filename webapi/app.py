@@ -1,9 +1,7 @@
-from flask import Flask, request, response, jsonify, current_app
-from datetime import datetime
+from flask import Flask, request, response, jsonify
 from crypto_utils import decrypt_payload, encrypt_payload # 🔐 
-from helper import compose_response_structure    # 📄 eigene Logik
+from helper import compose_response_structure, maybe_compress_then_encrypt  # 📄 eigene Logik
 from werkzeug.exceptions import BadRequest
-from cryptography.fernet import Fernet
 import base64
 import configparser
 import threading, 
@@ -74,7 +72,9 @@ def check_request():
     try:
         #Decrypten der nachricht
         encrypted_data = request.get_data()
-        decrypted_json = decrypt_payload(encrypted_data, PRIVATE_KEY_PATH)
+        # decrypt liefert BYTES (siehe crypto_utils)
+        decrypted_bytes = decrypt_payload(encrypted_data, PRIVATE_KEY)
+        decrypted_json = decrypted_bytes.decode("utf-8")
         data = json.loads(decrypted_json)
         
         #Check User
@@ -99,9 +99,12 @@ def check_request():
             plain_bytes = compose_response_structure(vn_nr, None, PROTOKOLL_FOLDER, output="tsv")
 
         # Jetzt ggf. GZIP → dann ENCRYPT
-        cipher, was_gzip, original_size = maybe_compress_then_encrypt(plain_bytes, encrypt_payload, PRIVATE_KEY)
-
-                # Wichtig: verschlüsselte Binärantwort, kein Content-Encoding setzen
+        cfg = get_config()
+        cipher, was_gzip, original_size = maybe_compress_then_encrypt(
+            plain_bytes, encrypt_payload, PRIVATE_KEY, cfg=cfg
+            )
+ 
+        # Wichtig: verschlüsselte Binärantwort, kein Content-Encoding setzen
         # (das würde sich auf die verschlüsselte Nutzlast beziehen und ist wirkungslos)
         resp = Response(cipher, status=200, mimetype="application/octet-stream")
         # Meta-Hinweise für den Client:
@@ -119,7 +122,7 @@ def check_request():
 
         # 🔐 verschlüsseln; encrypt_payload erwartet str|bytes → hier bytes
 
-    except (json.JSONDecodeError, UnicodeDecodeError, ValueError) as e:
+    except (json.JSONDecodeError, UnicodeDecodeError, ValueError):
         # 👇 passiert bei falschem Key
         return jsonify({
             "status": "error",
