@@ -307,6 +307,8 @@ def maybe_compress_then_encrypt(plain_bytes: bytes, encrypt_func, key_bytes) -> 
 
     compressed = False
     out_bytes = plain_bytes
+def maybe_compress_then_encrypt(plain_bytes, encrypt_func, key_bytes, cfg=None) -> tuple[bytes,bool,int]:
+    # ... lese gzip_enabled / level / min_size aus cfg["server"], sonst Defaults
 
     if gzip_enabled and size >= gzip_min_size:
         out_bytes = gzip.compress(plain_bytes, compresslevel=gzip_level)

@@ -2,19 +2,33 @@ from flask import Flask, request, jsonify, Response
 from crypto_utils import decrypt_payload, encrypt_payload # 🔐 
 from helper import compose_response_structure, maybe_compress_then_encrypt  # 📄 eigene Logik
 from werkzeug.exceptions import BadRequest
-import base64
+import base64, hashlib, binascii   # <-- NEU
 import configparser
 import threading 
 import time
 import os
 import json
 import openpyxl
-
 from typing import Optional
+app = Flask(__name__)
 
 PRIVATE_KEY = base64.b64decode(os.environ.get("PRIVATE_KEY_BASE64", ""))
 
-app = Flask(__name__)
+
+# === DEBUG: Key-Info beim Start ===
+try:
+    if PRIVATE_KEY:
+        pk_b64 = base64.b64encode(PRIVATE_KEY).decode("utf-8")
+        pk_len = len(PRIVATE_KEY)
+        pk_sha = hashlib.sha256(PRIVATE_KEY).hexdigest()
+        print(f"[DEBUG] PRIVATE_KEY(Base64)={pk_b64}  len={pk_len}  sha256={pk_sha}")
+    else:
+        print("[DEBUG][WARN] PRIVATE_KEY ist leer! Env var PRIVATE_KEY_BASE64 fehlt/leer.")
+except Exception as e:
+    print(f"[DEBUG][ERR] Konnte PRIVATE_KEY nicht loggen: {e}")
+    
+    
+
 SHARED_FOLDER = "/app/shared/"
 EXPOSED_FOLDER = "/app/shared/Expose/"
 REQUIRED_FOLDERS = ["Listen/", "Protokolle/", "Archiv/"]
@@ -70,11 +84,19 @@ def get_config() -> configparser.ConfigParser:
 @app.route("/get_protokoll", methods=["POST"])
 def check_request():
     try:
-        #Decrypten der nachricht
-        encrypted_data = request.get_data()
-        # decrypt liefert BYTES (siehe crypto_utils)
-        decrypted_bytes = decrypt_payload(encrypted_data, PRIVATE_KEY)
-        decrypted_json = decrypted_bytes.decode("utf-8")
+        # --- Debug: eingehende Nutzlast ---
+        enc = request.get_data()  # bytes
+        print(f"[DEBUG] /get_protokoll: incoming {len(enc)} bytes")
+        
+        # --- Robust decrypt: bytes ODER str kompatibel ---
+        dec = decrypt_payload(enc, PRIVATE_KEY)  # kann bytes ODER str liefern (je nach crypto_utils-Version)
+        if isinstance(dec, bytes):
+            decrypted_json = dec.decode("utf-8", errors="strict")
+        else:
+            decrypted_json = dec  # already str
+            
+        print(f"[DEBUG] decrypted JSON length={len(decrypted_json)}")
+    
         data = json.loads(decrypted_json)
         
         #Check User
@@ -98,43 +120,34 @@ def check_request():
             # default TSV (kompakt)
             plain_bytes = compose_response_structure(vn_nr, None, PROTOKOLL_FOLDER, output="tsv")
 
+        print(f"[DEBUG] plain payload size before gzip/encrypt: {len(plain_bytes)} bytes (fmt={fmt})")
+        
+        
         # Jetzt ggf. GZIP → dann ENCRYPT
         cfg = get_config()
         cipher, was_gzip, original_size = maybe_compress_then_encrypt(
             plain_bytes, encrypt_payload, PRIVATE_KEY, cfg=cfg
             )
  
-        # Wichtig: verschlüsselte Binärantwort, kein Content-Encoding setzen
-        # (das würde sich auf die verschlüsselte Nutzlast beziehen und ist wirkungslos)
+
         resp = Response(cipher, status=200, mimetype="application/octet-stream")
-        # Meta-Hinweise für den Client:
-        # 1) sagt: die ENTschlüsselte Nutzlast ist gzip-komprimiert
         if was_gzip:
             resp.headers["X-Content-Compressed"] = "gzip"
-        # 2) für Debug/Monitoring:
         resp.headers["X-Original-Size"] = str(original_size)
-        resp.headers["X-Format"] = fmt  # "tsv" oder "json"
-        # Damit Caches/Proxies auf Clientseite nicht kaputt gehen:
+        resp.headers["X-Format"] = fmt
         resp.headers["Cache-Control"] = "no-store"
         return resp
- 
-        # ✨ TSV erzeugen (bytes)
 
-        # 🔐 verschlüsseln; encrypt_payload erwartet str|bytes → hier bytes
-
-    except (json.JSONDecodeError, UnicodeDecodeError, ValueError):
-        # 👇 passiert bei falschem Key
+    except (json.JSONDecodeError, UnicodeDecodeError, ValueError) as e:
+        print(f"[DEBUG][ERR] decrypt/json error: {e}")
         return jsonify({
             "status": "error",
             "message": "Entschlüsselung oder JSON-Parsing fehlgeschlagen. Möglicherweise falscher Key."
         }), 400
 
     except Exception as e:
-        # Allgemeiner Fehler
-        return jsonify({
-            "status": "error",
-            "message": str(e)
-        }), 500
+        print(f"[DEBUG][ERR] unexpected: {e}")
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 
 def validate_user(username, password):
