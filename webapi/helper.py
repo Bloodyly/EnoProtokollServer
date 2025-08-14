@@ -288,28 +288,44 @@ def _wartung_defaults() -> List[Dict[str,str]]:
             {"typ":"Q3","Durch":"","datum":""},
             {"typ":"Q4","Durch":"","datum":""}]
 
-def maybe_compress_then_encrypt(plain_bytes: bytes, encrypt_func, key_bytes) -> tuple[bytes, bool, int]:
+def maybe_compress_then_encrypt(
+    plain_bytes: bytes,
+    encrypt_func,
+    key_bytes: bytes,
+    cfg=None,
+):
     """
-    Komprimiert (falls aktiviert & sinnvoll) und verschlüsselt dann.
-    Rückgabe: (cipher_bytes, compressed?, original_size)
+    Komprimiert optional (abhängig von cfg) und verschlüsselt dann.
+    Rückgabe: (cipher_bytes, compressed_bool, original_size_int)
     """
-    cfg = get_config()
-    sec = cfg["server"]
-    gzip_enabled = sec.getboolean("gzip_enabled", fallback=True)
-    gzip_min_size = sec.getint("gzip_min_size", fallback=1024)
-    gzip_level = min(9, max(1, sec.getint("gzip_level", fallback=5)))
-    max_plain = sec.getint("max_plain_response_size", fallback=10*1024*1024)
+    # --- sichere Defaults ---
+    gzip_enabled = True
+    gzip_min_size = 1024
+    gzip_level = 5
+    max_plain = 10 * 1024 * 1024  # 10 MB
+
+    # --- cfg übersteuert Defaults, wenn vorhanden ---
+    try:
+        if cfg is not None and "server" in cfg:
+            sec = cfg["server"]
+            # getboolean/getint werfen nicht, wenn fallback übergeben wird
+            gzip_enabled = sec.getboolean("gzip_enabled", fallback=gzip_enabled)
+            gzip_min_size = sec.getint("gzip_min_size", fallback=gzip_min_size)
+            gzip_level = sec.getint("gzip_level", fallback=gzip_level)
+            if gzip_level < 1: gzip_level = 1
+            if gzip_level > 9: gzip_level = 9
+            max_plain = sec.getint("max_plain_response_size", fallback=max_plain)
+    except Exception:
+        # Falls die Config kaputt ist: auf Defaults laufen
+        pass
 
     size = len(plain_bytes)
     if size > max_plain:
-        # Hard stop – verhindert zu große Antworten vor der Verschlüsselung
         raise ValueError(f"Antwort zu groß ({size} Bytes), abgebrochen.")
 
     compressed = False
     out_bytes = plain_bytes
-def maybe_compress_then_encrypt(plain_bytes, encrypt_func, key_bytes, cfg=None) -> tuple[bytes,bool,int]:
-    # ... lese gzip_enabled / level / min_size aus cfg["server"], sonst Defaults
-
+    
     if gzip_enabled and size >= gzip_min_size:
         out_bytes = gzip.compress(plain_bytes, compresslevel=gzip_level)
         compressed = True
