@@ -4,7 +4,7 @@ services:
   flaskapi:
     build: ./webapi
     environment:  # ✅ richtig
-      PRIVATE_KEY_BASE64: "ZGVpbmVpbnNpY2hlck1laXN0ZWdlbg=="
+      PRIVATE_KEY_BASE64: "+FT7XNKeH9E7bg/WGWldaSkjMjdNMXbZH1c83PPkLbg="
     container_name: flaskapi
     ports:
       - "5000:5000"

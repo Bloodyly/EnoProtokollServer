@@ -2,6 +2,7 @@ import base64
 import gzip
 import json
 import sys
+import hashlib
 from getpass import getpass
 from typing import Tuple
 
@@ -40,7 +41,7 @@ def aes_decrypt_ecb_pkcs7(data: bytes, key: bytes) -> bytes:
 
 def prompt_inputs() -> Tuple[str, bytes, str, str, str]:
     url = input(f"Server-URL [{DEFAULT_URL}]: ").strip() or DEFAULT_URL
-    key_in = getpass("PRIVATE_KEY (Base64 oder roh, wird nicht angezeigt): ").strip()
+    key_in = input("PRIVATE_KEY (Base64 oder roh, wird nicht angezeigt): ").strip()
     key = parse_key(key_in)
     print_key_info(key)
     username = input("Benutzername: ").strip()
