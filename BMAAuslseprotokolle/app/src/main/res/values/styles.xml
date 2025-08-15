@@ -1,0 +1,11 @@
+<resources>
+
+    <!-- App-Thema -->
+    <style name="AppTheme" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
+        <!-- Stelle sicher, dass die Statusleiste nicht überdeckt wird -->
+        <item name="android:windowFullscreen">false</item>
+        <item name="android:windowTranslucentStatus">false</item>
+        <item name="android:statusBarColor">?attr/colorPrimaryDark</item>
+    </style>
+
+</resources>
