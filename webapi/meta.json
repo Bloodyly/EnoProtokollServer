@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "1.0",
+  "defaults": {
+    "headerScanMaxRows": 8,            // wie weit wir maximal scannen
+    "dashTokens": ["-", "—", "–", ""],
+    "dashRegex": [
+      "^-+$",             // eine oder mehrere Bindestriche
+      "^[—–-]{3,}$",      // 3+ beliebige Strich-Varianten
+      "^\\.+$"            // nur Punkte (........)
+  },
+  "types": {
+    "Brandmelde": {
+      "excel": {
+        "typeMarker": { "label": "BMA", "row": 5, "col": 2 }, // 1-basiert in Excel-UI (A1)
+        "header": { "rows": 1, "startRow": 7 },                      // Zeilen 1–4 sind Header
+        "body":   { "startRow": 8 }                                   // ab Zeile 5 ist Body
+		"dash": {
+		"tokens": ["-", "—", "–", ""],
+		"regex": ["^-+$", "^[—–-]{3,}$", "^\\.+$"]
+        }
+      },
+      "payload": {
+        "protocol": "Brandmelde",
+        "normalizeHeaderWhitespace": true,
+        "emitMergedSpans": false
+      }
+    },
+    "Lichtruf": {
+      "excel": {
+        "typeMarker": { "label": "Lichtruf", "row": 5, "col": 2 },
+        "header": { "rows": 2, "startRow": 7 },                      // Beispiel: 2-zeiliger Kopf
+        "body":   { "startRow": 9 }
+		"dash": {
+		"tokens": ["-", "—", "–", ""],
+		"regex": ["^-+$", "^[—–-]{3,}$", "^\\.+$"]
+        }
+      },
+      "payload": {
+        "protocol": "Lichtruf",
+        "normalizeHeaderWhitespace": true,
+        "emitMergedSpans": true                                       // Lichtruf hat oft Spans
+      }	  
+    }
+	"Notlicht": {
+		"excel": {
+		  "typeMarker": { "label": "Lichtruf", "row": 5, "col": 2 },
+          "header": { "rows": 2, "startRow": 7 },                      // Beispiel: 2-zeiliger Kopf
+          "body":   { "startRow": 9 }
+		  		"dash": {
+		"tokens": ["-", "—", "–", ""],
+		"regex": ["^-+$", "^[—–-]{3,}$", "^\\.+$"]
+        }
+	}
+}
