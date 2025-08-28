@@ -23,6 +23,7 @@ class MainActivity : AppCompatActivity() {
         var aktuellesQuartal = "Q1" // oder dynamisch initialisieren
         var wartungsTyp = "Quartal"
     }
+	
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,6 +31,19 @@ class MainActivity : AppCompatActivity() {
         tableDataMelder = Array(1) { Array(1) { "" } } // Leeres Dummy-Array
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        lifecycleScope.launch {
+            val vn = "DEMO-VERTRAGSNUMMER"
+            val env = com.eno.protokolle.network.ReceiveAndDecode.receiveProtokollNew(this@MainActivity, vn)
+            if (env != null) {
+                android.util.Log.i("ProtokollNew", "Meta: ${env.meta.pType} / ${env.meta.wType}")
+                android.util.Log.i("ProtokollNew", "Anlagen: ${env.protokoll.Anlagen.size}")
+                // Beispiel: dichten Body der ersten Anlage/Melder erstellen
+                val melderGrid = env.protokoll.Anlagen.firstOrNull()?.Melder?.grid
+                val dense = melderGrid?.let { com.eno.protokolle.newmodel.ProtokollCodec.run { it.buildDenseBodyAsString() } }
+                android.util.Log.i("ProtokollNew", "Dense rows: ${dense?.size} cols=${melderGrid?.colCount}")
+            }
+        }
 
         // ✅ Startdialog erst NACH setContentView
         if (intent?.data == null) {
@@ -187,7 +201,7 @@ class MainActivity : AppCompatActivity() {
     }
     private fun ladeProtokollVomServer(vertragsnummer: String) {
         lifecycleScope.launch {
-            val protokoll = ReceiveAndDecode.receiveProtokoll(this@MainActivity, vertragsnummer)
+            val protokoll = ReceiveAndDecode.receiveProtokollNew(this@MainActivity, vertragsnummer)
             if (protokoll != null) {
                 Toast.makeText(this@MainActivity, "Daten erfolgreich geladen", Toast.LENGTH_SHORT).show()
 
