@@ -1,6 +1,6 @@
 package com.eno.protokolle.newmodel
 
-object `ProtokollMapper.kt` {
+object ProtokollMapper {
 
     fun toConstruct(env: ProtokollEnvelope): ProtokollConstruct {
         val pType = env.meta.pType

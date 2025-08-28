@@ -5,7 +5,7 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.lifecycle.lifecycleScope
 import com.eno.protokolle.network.ReceiveAndDecode
-import com.eno.protokolle.newmodel.`ProtokollMapper.kt`
+import com.eno.protokolle.newmodel.ProtokollMapper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -27,7 +27,7 @@ class MainActivity : ComponentActivity() {
                 }
 
                 // Transport → UI-Konstrukt
-                val construct = `ProtokollMapper.kt`.toConstruct(env)
+                val construct = ProtokollMapper.toConstruct(env)
 
                 // Bis wir UI bauen: kurz loggen
                 android.util.Log.i("Construct",
