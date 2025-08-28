@@ -1,6 +1,5 @@
 package com.eno.protokolle.newmodel
 
-import com.eno.protokolle.MeldeGruppe
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
@@ -9,7 +8,7 @@ import kotlinx.serialization.json.JsonPrimitive
 
 @Serializable
 data class Meta(
-    @SerialName("PType") val pType: String,
+    @SerialName("PType") val pType: String,  // EMA, BMA LR....
     @SerialName("WType") val wType: String,  // "1J","2Q","4Q"
     val schemaVersion: String,
     val generatedAt: String
@@ -63,7 +62,9 @@ data class Anlage(
 @Serializable
 data class Protokoll(
     val MelderTypes: List<String>,
-    val Anlagen: List<Anlage>
+    val Anlagen: List<Anlage>,
+    val VN: String,
+    val Kdn: String
 )
 
 @Serializable

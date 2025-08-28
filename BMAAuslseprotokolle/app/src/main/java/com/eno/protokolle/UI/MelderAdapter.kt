@@ -1,4 +1,4 @@
-package com.eno.protokolle
+package com.eno.protokolle.UI
 
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
@@ -16,6 +16,8 @@ import android.widget.EditText
 import android.widget.Toast
 import com.inqbarna.tablefixheaders.adapters.BaseTableAdapter
 import androidx.core.graphics.toColorInt
+import com.eno.protokolle.MainActivity
+import com.eno.protokolle.R
 
 class MelderMatrixAdapter(
     private val context: Context,
