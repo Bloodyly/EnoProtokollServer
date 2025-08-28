@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/intro_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="24dp">
+
+    <TextView
+        android:id="@+id/txtTitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="AuslöseProtokoll Client"
+        android:textStyle="bold"
+        android:textSize="24sp"
+        android:gravity="center"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <LinearLayout
+        android:id="@+id/btnGroup"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:layout_marginTop="32dp"
+        app:layout_constraintTop_toBottomOf="@id/txtTitle"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <Button
+            android:id="@+id/btnSettings"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Einstellungen" />
+
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="12dp"/>
+
+        <Button
+            android:id="@+id/btnLoadDemo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Demodaten laden" />
+
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="12dp"/>
+
+        <Button
+            android:id="@+id/btnFetchByVn"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Daten nach VN abrufen" />
+
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="12dp"/>
+
+        <Button
+            android:id="@+id/btnSearchByVn"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Protokoll Suchen" />
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
