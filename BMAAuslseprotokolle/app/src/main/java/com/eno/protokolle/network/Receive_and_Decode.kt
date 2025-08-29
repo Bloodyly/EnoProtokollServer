@@ -1,67 +1,85 @@
 package com.eno.protokolle.network
 
-
 import android.content.Context
 import android.util.Log
+import com.eno.protokolle.newmodel.ProtokollCodec
+import com.eno.protokolle.newmodel.ProtokollEnvelope
+import com.eno.protokolle.prefs.AppPrefs
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.DataInputStream
 import java.io.DataOutputStream
+import java.net.InetSocketAddress
 import java.net.Socket
-import com.eno.protokolle.newmodel.ProtokollEnvelope
-import com.eno.protokolle.newmodel.ProtokollCodec
-import android.content.Context.MODE_PRIVATE
 
 object ReceiveAndDecode {
 
-	// Neuer Empfang für das *neue* Protokoll-JSON
-	suspend fun receiveProtokollNew(
+    // Neuer Empfang für das *neue* Protokoll-JSON
+    suspend fun receiveProtokollNew(
         context: Context,
         vertragsnummer: String
-    ): ProtokollEnvelope? {
-        return try {
-            val prefs = context.getSharedPreferences("app_settings", MODE_PRIVATE)
-            val serverHost = prefs.getString("server", null)
-            val port = prefs.getString("port", null)?.toIntOrNull()
-            val privateKey = prefs.getString("key", null)
-            val username = prefs.getString("user", null)
-            val password = prefs.getString("password", null)
+    ): ProtokollEnvelope? = withContext(Dispatchers.IO) {
+        try {
+            val prefs = AppPrefs.load(context)
+            if (AppPrefs.isEmpty(prefs)) {
+                Log.e("ReceiveNew", "Settings leer: Host/Port fehlen")
+                return@withContext null
+            }
 
-            if (serverHost.isNullOrEmpty() || port == null || privateKey.isNullOrEmpty() ||
-                username.isNullOrEmpty() || password.isNullOrEmpty()
+            val serverHost = prefs.host
+            val port = prefs.port
+            val privateKey = prefs.aesB64
+            val username = prefs.user
+            val password = prefs.pass
+
+            // Minimal-Validierung: falls du user/pass/aes zwingend brauchst
+            if (serverHost.isBlank() || port !in 1..65535 ||
+                privateKey.isBlank() || username.isBlank() || password.isBlank()
             ) {
                 Log.e("ReceiveNew", "Einstellungen unvollständig!")
-                return null
+                return@withContext null
             }
-            Socket(serverHost, port).use { socket ->
-                val output = DataOutputStream(socket.getOutputStream())
-                val input = DataInputStream(socket.getInputStream())
 
-                // ✉️ Anfrage senden (username + pw + vn)
-                val payload = "$username|$password|$vertragsnummer"
-                val encryptedRequest = NetworkHelper.encryptAES(payload, privateKey)
-                output.writeInt(encryptedRequest.size)
-                output.write(encryptedRequest)
-                output.flush()
+            // Mit Timeout verbinden
+            Socket().use { socket ->
+                socket.connect(InetSocketAddress(serverHost, port), /* timeout ms */ 5000)
 
-                // 📥 Antwort lesen
-                val length = input.readInt()
-                val encryptedResponse = ByteArray(length)
-                input.readFully(encryptedResponse)
+                DataOutputStream(socket.getOutputStream()).use { output ->
+                    DataInputStream(socket.getInputStream()).use { input ->
 
-                // 🔓 Antwort entschlüsseln
-                val decryptedJson = NetworkHelper.decryptAES(encryptedResponse, privateKey)
+                        // ✉️ Anfrage senden (username|password|vertragsnummer)
+                        val payload = "$username|$password|$vertragsnummer"
+                        val encryptedRequest = NetworkHelper.encryptAES(payload, privateKey)
+                        output.writeInt(encryptedRequest.size)
+                        output.write(encryptedRequest)
+                        output.flush()
 
-                // 🧱 Byte-basierte JSON-Daten decodieren
-                val env = ProtokollCodec.decode(decryptedJson)
- 
-                // 📥 Optional: lokal cachen
-                ProtokollStorage.save(context, vertragsnummer, decryptedJson)
+                        // 📥 Antwort lesen (Length-Prefix)
+                        val length = input.readInt()
+                        if (length <= 0 || length > 10 * 1024 * 1024) {
+                            // einfacher Schutz gegen Unsinn
+                            Log.e("ReceiveNew", "Unerwartete Antwortlänge: $length")
+                            return@withContext null
+                        }
+                        val encryptedResponse = ByteArray(length)
+                        input.readFully(encryptedResponse)
 
-                env
+                        // 🔓 Entschlüsseln (AES/ECB entsprechend deiner NetworkHelper-Implementierung)
+                        val decryptedJson = NetworkHelper.decryptAES(encryptedResponse, privateKey)
+
+                        // 🧱 JSON decodieren
+                        val env = ProtokollCodec.decode(decryptedJson)
+
+                        // 💾 Optional: lokal cachen
+                        ProtokollStorage.save(context, vertragsnummer, decryptedJson)
+
+                        return@withContext env
+                    }
+                }
             }
         } catch (e: Exception) {
             Log.e("ReceiveNew", "Fehler: ${e.message}", e)
             null
         }
-
     }
- }
+}

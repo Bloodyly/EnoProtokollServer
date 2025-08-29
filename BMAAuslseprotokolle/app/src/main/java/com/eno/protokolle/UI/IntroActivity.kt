@@ -6,13 +6,21 @@ import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
 import androidx.activity.ComponentActivity
+import com.eno.protokolle.prefs.AppPrefs
 
 class IntroActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_intro)
+        val prefs = AppPrefs.load(this)
 
+        if (AppPrefs.isEmpty(prefs)) {
+            startActivity(
+                Intent(this, SettingsActivity::class.java)
+                    .putExtra("fromStart", true)
+            )
+        }
         findViewById<Button>(R.id.btnSettings).setOnClickListener {
             startActivity(Intent(this, SettingsActivity::class.java))
         }
