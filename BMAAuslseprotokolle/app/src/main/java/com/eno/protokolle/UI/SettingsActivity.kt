@@ -7,7 +7,6 @@ import android.widget.EditText
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.lifecycle.lifecycleScope
-import com.eno.protokolle.UI.DebugActivity
 import com.eno.protokolle.prefs.AppPrefs
 import com.eno.protokolle.util.DebugLog
 import kotlinx.coroutines.Dispatchers
