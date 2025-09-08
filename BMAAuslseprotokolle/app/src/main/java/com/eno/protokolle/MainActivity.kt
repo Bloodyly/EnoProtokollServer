@@ -1,5 +1,7 @@
 package com.eno.protokolle
 
+
+import android.content.Intent   // <— WICHTIG
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -14,6 +16,15 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Falls weder Deep-Link (data) noch ein "mode"/"vertragsnummer"-Extra vorhanden ist → Intro zeigen
+        val hasData = intent?.data != null
+        val hasExtras = intent?.extras?.isEmpty == false
+        if (intent?.data == null && intent?.extras?.isEmpty != false) {
+            startActivity(Intent(this, com.eno.protokolle.ui.IntroActivity::class.java))
+            finish()
+            return
+        }
 
         // Hier erstmal keine UI – nur Flow "abrufen → mappen"
         lifecycleScope.launch(Dispatchers.IO) {

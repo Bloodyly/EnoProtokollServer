@@ -1,3 +1,4 @@
+// AppPrefs.kt
 package com.eno.protokolle.prefs
 
 import android.content.Context
@@ -19,14 +20,27 @@ object AppPrefs {
         val aesB64: String = ""
     )
 
-    fun load(ctx: Context): Model = with(ctx.getSharedPreferences(FILE, MODE_PRIVATE)) {
-        Model(
-            host = getString(K_HOST, "") ?: "",
-            port = getInt(K_PORT, 0),
-            user = getString(K_USER, "") ?: "",
-            pass = getString(K_PASS, "") ?: "",
-            aesB64 = getString(K_AES, "") ?: ""
-        )
+    fun load(ctx: Context): Model {
+        val sp = ctx.getSharedPreferences(FILE, MODE_PRIVATE)
+
+        val host = sp.getString(K_HOST, "") ?: ""
+        val user = sp.getString(K_USER, "") ?: ""
+        val pass = sp.getString(K_PASS, "") ?: ""
+        val aes  = sp.getString(K_AES,  "") ?: ""
+
+        // 🔧 Port robust laden + migrieren (String → Int)
+        val port: Int = try {
+            sp.getInt(K_PORT, 0)
+        } catch (e: ClassCastException) {
+            // Früher als String gespeichert
+            val asString = sp.getString(K_PORT, "") ?: ""
+            val parsed = asString.toIntOrNull() ?: 0
+            // Aufräumen: künftig als Int persistieren
+            sp.edit().remove(K_PORT).putInt(K_PORT, parsed).apply()
+            parsed
+        }
+
+        return Model(host = host, port = port, user = user, pass = pass, aesB64 = aes)
     }
 
     fun save(ctx: Context, m: Model) {
