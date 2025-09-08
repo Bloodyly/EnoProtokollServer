@@ -9,10 +9,12 @@ import androidx.activity.ComponentActivity
 import androidx.lifecycle.lifecycleScope
 import com.eno.protokolle.prefs.AppPrefs
 import com.eno.protokolle.util.DebugLog
+import com.eno.protokolle.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.net.InetSocketAddress
 import java.net.Socket
+
 
 class SettingsActivity : ComponentActivity() {
     private lateinit var editServer: EditText
@@ -66,9 +68,7 @@ class SettingsActivity : ComponentActivity() {
             }
         }
 
-        btnDebug?.setOnClickListener {
-            startActivity(Intent(this, DebugActivity::class.java))
-        }
+
     }
 
     private fun readModelOrNull(): AppPrefs.Model? {

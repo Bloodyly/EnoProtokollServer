@@ -47,19 +47,25 @@ class TableAnlageAdapter(
             isSingleLine = false
         }
 
+        // Sicheres Lesen mit getOrElse, keine negativen Indizes
         val text = when {
-            row == 0 && column == 0 -> ""                                  // Top-left
-            row == 0                -> headers[column - 1]                  // Headerzeile
-            column == 0             -> leftColumn[row - 1]                  // linke Kopfspalte
-            else                    -> dataRows[row - 1].getOrElse(column - 1) { "" } // Zelle
+            row == 0 && column == 0 -> ""
+            row == 0               -> headers.getOrElse(column - 1) { "" }
+            column == 0            -> leftColumn.getOrElse(row - 1) { "" }
+            else                   -> dataRows.getOrElse(row - 1) { emptyList() }
+                .getOrElse(column - 1) { "" }
         }
         tv.text = text
 
-        // Simple Styling: Header + linke Spalte fett
-        tv.setTypeface(tv.typeface, if (row == 0 || column == 0) android.graphics.Typeface.BOLD else android.graphics.Typeface.NORMAL)
+        tv.setTypeface(
+            tv.typeface,
+            if (row == 0 || column == 0) android.graphics.Typeface.BOLD
+            else android.graphics.Typeface.NORMAL
+        )
 
         return tv
     }
+
 
     // Optional aber oft von der Lib erwartet – 1 View-Typ reicht uns:
     override fun getViewTypeCount(): Int = 1

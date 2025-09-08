@@ -8,6 +8,8 @@ import androidx.activity.ComponentActivity
 import androidx.lifecycle.lifecycleScope
 import com.eno.protokolle.network.ReceiveAndDecode
 import com.eno.protokolle.newmodel.ProtokollMapper
+import com.eno.protokolle.ui.IntroActivity
+import com.eno.protokolle.ui.SettingsActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -21,7 +23,7 @@ class MainActivity : ComponentActivity() {
         val hasData = intent?.data != null
         val hasExtras = intent?.extras?.isEmpty == false
         if (intent?.data == null && intent?.extras?.isEmpty != false) {
-            startActivity(Intent(this, com.eno.protokolle.ui.IntroActivity::class.java))
+            startActivity(Intent(this, IntroActivity::class.java))
             finish()
             return
         }

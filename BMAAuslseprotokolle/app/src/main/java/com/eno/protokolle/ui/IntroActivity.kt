@@ -28,7 +28,7 @@ class IntroActivity : ComponentActivity() {
 
         findViewById<Button>(R.id.btnLoadDemo).setOnClickListener {
             // Start Main im DEMO-Modus
-            startActivity(Intent(this, MainActivity::class.java).apply {
+            startActivity(Intent(this, ProtokollActivity::class.java).apply {
                 putExtra("mode", "DEMO")
             })
         }
@@ -41,7 +41,7 @@ class IntroActivity : ComponentActivity() {
                 .setView(input)
                 .setPositiveButton("Abrufen") { _, _ ->
                     val vn = input.text?.toString()?.trim().orEmpty()
-                    startActivity(Intent(this, MainActivity::class.java).apply {
+                    startActivity(Intent(this, ProtokollActivity::class.java).apply {
                         putExtra("mode", "VN")
                         putExtra("vertragsnummer", vn)
                     })
