@@ -53,7 +53,20 @@ object ReceiveAndDecode {
             .retryOnConnectionFailure(true)
             .build()
     }
+    // -------- Helper -------------------------------------------------------
 
+
+    private fun firstLines(text: String, maxLines: Int = 5, maxCols: Int = 240): String {
+        val lines = text.split('\n')
+        val builder = StringBuilder()
+        val take = lines.size.coerceAtMost(maxLines)
+        for (i in 0 until take) {
+            val line = lines[i].trimEnd('\r')
+            val clip = if (line.length > maxCols) line.substring(0, maxCols) + " …" else line
+            builder.append(clip).append('\n')
+        }
+        return builder.toString().trimEnd()
+    }
     // -------- Key-Parsing & Krypto -----------------------------------------
 
     /**
