@@ -14,6 +14,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.net.InetSocketAddress
 import java.net.Socket
+import com.eno.protokolle.R
 
 
 class SettingsActivity : ComponentActivity() {
