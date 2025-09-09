@@ -81,6 +81,19 @@ def get_config() -> configparser.ConfigParser:
         _config_cache = {"mtime": mtime, "cfg": cfg}
         return cfg
         
+# --- NEU: bevorzugtes Antwortformat bestimmen ---
+def _pick_response_format(cfg) -> str:
+    # a) Query-Param ?fmt=json|tsv
+    q = (request.args.get("fmt") or "").strip().lower()
+    # b) Header X-Prefer-Format: json|tsv
+    h = (request.headers.get("X-Prefer-Format") or "").strip().lower()
+    # c) Fallback aus config.ini
+    c = (cfg["server"].get("response_format", "tsv") or "tsv").strip().lower()
+    for cand in (q, h, c):
+        if cand in ("json", "tsv"):
+            return cand
+    return "tsv"
+        
 @app.route("/get_protokoll", methods=["POST"])
 def check_request():
     try:
@@ -112,16 +125,17 @@ def check_request():
             return jsonify({"status": "error", "message": "Benutzer oder Passwort ungültig"}), 401
         
         cfg = get_config()
-        fmt = (cfg["server"].get("response_format", "tsv") or "tsv").lower()
+        fmt = _pick_response_format(cfg)   # <-- statt fix aus config
         if fmt == "json":
             model = compose_response_structure(vn_nr, None, PROTOKOLL_FOLDER, output="json")
+            # schlank serialisieren (keine Leerzeichen)
             plain_bytes = json.dumps(model, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
         else:
-            # default TSV (kompakt)
+            # kompaktes TSV (default)
             plain_bytes = compose_response_structure(vn_nr, None, PROTOKOLL_FOLDER, output="tsv")
 
         print(f"[DEBUG] plain payload size before gzip/encrypt: {len(plain_bytes)} bytes (fmt={fmt})")
-        
+
         
         # Jetzt ggf. GZIP → dann ENCRYPT
         cfg = get_config()
