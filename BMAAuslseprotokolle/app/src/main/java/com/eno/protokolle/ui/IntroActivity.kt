@@ -8,6 +8,8 @@ import android.widget.EditText
 import androidx.activity.ComponentActivity
 import com.eno.protokolle.prefs.AppPrefs
 import com.eno.protokolle.R
+import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 
 class IntroActivity : ComponentActivity() {
 
@@ -34,14 +36,14 @@ class IntroActivity : ComponentActivity() {
         }
 
         findViewById<Button>(R.id.btnFetchByVn).setOnClickListener {
-            // VN per Dialog abfragen und Main starten
             val input = EditText(this).apply { hint = "Vertragsnummer" }
             AlertDialog.Builder(this)
                 .setTitle("Vertragsnummer")
                 .setView(input)
                 .setPositiveButton("Abrufen") { _, _ ->
                     val vn = input.text?.toString()?.trim().orEmpty()
-                    startActivity(Intent(this, ProtokollActivity::class.java).apply {
+                    // -> FetchActivity starten
+                    startActivity(Intent(this, FetchProgressDialog::class.java).apply {
                         putExtra("mode", "VN")
                         putExtra("vertragsnummer", vn)
                     })

@@ -3,6 +3,9 @@ package com.eno.protokolle.newmodel
 import kotlinx.serialization.json.*
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.contentOrNull
 
 object ProtokollCodec {
 
@@ -57,7 +60,8 @@ object ProtokollCodec {
             val cc = cell.c
             if (rr !in 0 until rowCount || cc !in 0 until colCount) continue
             body[rr][cc] = when (val v = cell.v) {
-                null, JsonNull -> ""
+                null -> ""
+                is JsonNull -> ""
                 is JsonPrimitive -> when {
                     v.isString -> v.content
                     v.booleanOrNull != null -> v.boolean.toString()

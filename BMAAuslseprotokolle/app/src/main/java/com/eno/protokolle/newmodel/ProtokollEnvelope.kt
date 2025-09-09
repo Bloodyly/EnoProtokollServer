@@ -33,7 +33,7 @@ data class Head(
 data class Cell(
     val r: Int,
     val c: Int,
-    val v: JsonElement? = null, // String/Number/Bool/Null
+    val v: String? = null, // String/Number/Bool/Null
     val t: String? = null
 )
 
@@ -63,7 +63,7 @@ data class Anlage(
 data class Protokoll(
     val MelderTypes: List<String>,
     val Anlagen: List<Anlage>,
-    val VN: String,
+    val VN:  String,
     val Kdn: String
 )
 
