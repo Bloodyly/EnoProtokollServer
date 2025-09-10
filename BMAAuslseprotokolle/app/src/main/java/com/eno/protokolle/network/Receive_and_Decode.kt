@@ -205,20 +205,43 @@ object ReceiveAndDecode {
                     maybeGunzip(decrypted, headerSaysGzip)
                 }.onFailure {
                     Log.e("ReceiveHTTP", "GZIP-Entpackung fehlgeschlagen", it)
-                    onLog("GZIP-Entpackung fehlgeschlagen.")
+                    // auch wenn Entpacken fehlschlägt: versuch einen Text-Preview zu loggen
+                    val preview = try {
+                        firstLines(String(decrypted, Charsets.UTF_8))
+                    } catch (_: Throwable) {
+                        ""
+                    }
+                    if (preview.isNotEmpty()) Log.w("ReceiveHTTP", "Plaintext-Preview:\n$preview")
+                    onLog("GZIP-Entpackung fehlgeschlagen. Preview im Logcat.")
                 }.getOrNull() ?: return@withContext null
 
-                val text = plainBytes.toString(Charsets.UTF_8)
-                onLog("Payload entschlüsselt (${text.length} Zeichen).")
+                val text = plainBytes.toString(Charsets.UTF_8).trimStart()
+                val looksJson = text.startsWith("{")
 
-                // Optional: X-Format prüfen (JSON/TSV). Wir erwarten JSON für ProtokollCodec.
+                if (!looksJson) {
+                    // TSV oder etwas anderes – ERSTE 5 ZEILEN LOGGEN
+                    val preview = firstLines(text, maxLines = 5)
+                    Log.w("ReceiveHTTP", "Nicht-JSON erhalten. Erste Zeilen:\n$preview")
+                    onLog("Server lieferte kein JSON. Erste Zeilen siehe Logcat. Payload wird gecached.")
+                    // Payload cachen, damit du sie inspizieren kannst
+                    ProtokollStorage.save(context, vn, text)
+                    return@withContext null
+                }
+
+                onLog("JSON entschlüsselt (${text.length} Zeichen).")
+
+                // 6) JSON -> Datenmodell
                 val env = runCatching { ProtokollCodec.decode(text) }
                     .onFailure {
+                        // Bei JSON-Decode-Fehler ebenfalls die ersten 5 Zeilen loggen
                         Log.e("ReceiveHTTP", "JSON Decode fehlgeschlagen", it)
-                        onLog("JSON Decode fehlgeschlagen.")}
+                        val preview = firstLines(text, maxLines = 5)
+                        Log.w("ReceiveHTTP", "JSON-Preview (erste Zeilen):\n$preview")
+                        onLog("JSON Decode fehlgeschlagen. Preview im Logcat.")
+                    }
                     .getOrNull() ?: return@withContext null
 
-                // 6) Optional local cache
+                // 7) Optional local cache
                 ProtokollStorage.save(context, vn, text)
                 onLog("Protokoll gespeichert.")
 

@@ -92,7 +92,7 @@ def _pick_response_format(cfg) -> str:
     for cand in (q, h, c):
         if cand in ("json", "tsv"):
             return cand
-    return "tsv"
+    return "json"
         
 @app.route("/get_protokoll", methods=["POST"])
 def check_request():
