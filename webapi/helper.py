@@ -10,14 +10,20 @@ LISTEN_FOLDER = os.path.join(SHARED_FOLDER, "Expose", "Listen")
 PROTOKOLL_FOLDER = os.path.join(SHARED_FOLDER, "Expose", "Protokolle")
 META_JSON = os.path.join(SHARED_FOLDER, "meta.json")
 
+
 def compose_response_structure(
     vn_nr: str,
     _excel_template_path: Optional[str],   # wird durch data.json übersteuert
     _protokoll_root: str,                  # wir nutzen die Konstanten oben
     *,
     output: Literal["json","tsv"] = "tsv"
-) -> bytes | Dict[str, Any]:
-    """Baut zuerst dein JSON-Modell, optional als TSV ausgegeben."""
+) -> bytes:
+    """
+    Baut zuerst dein JSON-Modell und gibt es entweder
+    - als kompaktes JSON (bytes) oder
+    - als TSV (bytes) zurück.
+    """
+
     # 1) filename über data.json
     filename = _resolve_filename_from_datajson(vn_nr)
     if not filename:
@@ -39,33 +45,53 @@ def compose_response_structure(
     anlagen: List[Dict[str, Any]] = []
     for anlagen_name, ldata in listen_struct.items():
         groups_out: List[Dict[str, Any]] = []
-        # Map aus Protokoll: (gruppe, melder_index) -> "Q1" / "N.i.o." / ""
+        # Map aus Protokoll: (gruppe, melder_index) -> "Q1" / "N.i.o." / "" / "-"
         pmap = protokoll_struct.get(anlagen_name, {})
 
         for g in ldata["Gruppen"]:
             mg = str(g["Nummer"])
             anz = g["Anz"]
-            art = g["Art"]
+            art = g.get("Art") or "-"
             melder = []
             for idx in range(1, anz + 1):
-                typ = g["MelderTypen"][idx-1] if idx-1 < len(g["MelderTypen"]) and g["MelderTypen"][idx-1] else "-"
-                ausl = pmap.get((mg, idx), "-")
-                melder.append({"Nummer": idx, "typ": typ, "ausluesung": ausl or "-"})
-            groups_out.append({"Nummer": int(mg) if mg.isdigit() else mg, "Art": art or "-", "Melder": melder})
+                # Typ aus Vorlage; ggf. "-"
+                typ = "-"
+                if g.get("MelderTypen"):
+                    j = idx - 1
+                    if 0 <= j < len(g["MelderTypen"]):
+                        typ = g["MelderTypen"][j] or "-"
+                # Auslösung aus Protokoll; normalisiert auf "-"
+                ausl = pmap.get((mg, idx), "-") or "-"
+                melder.append({
+                    "Nummer": idx,
+                    "typ": typ,
+                    "ausluesung": ausl
+                })
+            groups_out.append({
+                "Nummer": int(mg) if mg.isdigit() else mg,
+                "Art": art,
+                "Melder": melder
+            })
 
         anlagen.append({
             "name": anlagen_name,
             "Gruppen": groups_out,
-            "Hardware": ldata["Hardware"],  # aus Vorlage; falls nicht vorhanden: leer
-            "Wartung": ldata["Wartung"],    # aus Vorlage; sonst Q1..Q4-Defaults
+            "Hardware": ldata.get("Hardware", {}),  # aus Vorlage; falls nicht vorhanden: leeres Objekt
+            "Wartung": ldata.get("Wartung", {}),    # aus Vorlage; sonst Q1..Q4-Defaults in Parser
         })
 
-    # 5) Meta (Kunde/Wartungstyp) aus data.json oder aus Listen-Kopf
+    # 5) Meta (Kunde/Wartungstyp) aus data.json oder Listen-Kopf
     kunde, wartungstyp = _resolve_meta(vn_nr, meta_from_listen)
 
-    model = {
+    # 6) Meta-Header analog zu TSV (#VERSION/#GENERATED/…)
+    version = 1
+    generated = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+
+    model: Dict[str, Any] = {
         "Data": {
             "Meta": {
+                "Version": version,
+                "Generated": generated,
                 "VN": _normalize_vn(vn_nr),
                 "Kunde": kunde or "-",
                 "Wartungstyp": wartungstyp or "-",
@@ -75,9 +101,11 @@ def compose_response_structure(
     }
 
     if output == "json":
-        return model
-    return _pack_tsv(model)
+        # Kompakt serialisieren, damit die Nutzlast klein bleibt
+        return json.dumps(model, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
 
+    # TSV (bestehende Implementierung nutzt das Modell)
+    return _pack_tsv(model)
 # ----------------------------- Resolver -------------------------------------
 
 def _resolve_filename_from_datajson(vn_nr: str) -> Optional[str]:
