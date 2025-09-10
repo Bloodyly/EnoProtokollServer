@@ -2,7 +2,8 @@ from flask import Flask, request, jsonify, Response
 from crypto_utils import decrypt_payload, encrypt_payload # 🔐 
 from helper import compose_response_structure, maybe_compress_then_encrypt  # 📄 eigene Logik
 from werkzeug.exceptions import BadRequest
-import base64, hashlib, binascii   # <-- NEU
+import base64, hashlib, binascii   
+import logging
 import configparser
 import threading 
 import time
@@ -88,7 +89,7 @@ def _pick_response_format(cfg) -> str:
     # b) Header X-Prefer-Format: json|tsv
     h = (request.headers.get("X-Prefer-Format") or "").strip().lower()
     # c) Fallback aus config.ini
-    c = (cfg["server"].get("response_format", "tsv") or "tsv").strip().lower()
+    c = (cfg["server"].get("response_format", "tsv") or "json").strip().lower()
     for cand in (q, h, c):
         if cand in ("json", "tsv"):
             return cand
@@ -125,7 +126,8 @@ def check_request():
             return jsonify({"status": "error", "message": "Benutzer oder Passwort ungültig"}), 401
         
         cfg = get_config()
-        fmt = _pick_response_format(cfg)   # <-- statt fix aus config
+        fmt = "json"
+        #fmt = _pick_response_format(cfg)   # <-- statt fix aus config
         plain_bytes = compose_response_structure(vn_nr, None, PROTOKOLL_FOLDER, output=fmt)
 
         print(f"[DEBUG] plain payload size before gzip/encrypt: {len(plain_bytes)} bytes (fmt={fmt})")

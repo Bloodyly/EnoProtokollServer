@@ -16,7 +16,7 @@ def compose_response_structure(
     _excel_template_path: Optional[str],   # wird durch data.json übersteuert
     _protokoll_root: str,                  # wir nutzen die Konstanten oben
     *,
-    output: Literal["json","tsv"] = "tsv"
+    output: Literal["json","tsv"] = "json"
 ) -> bytes:
     """
     Baut zuerst dein JSON-Modell und gibt es entweder
