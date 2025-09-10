@@ -130,7 +130,7 @@ def check_request():
             # kompaktes TSV 
             plain_bytes = compose_response_structure(vn_nr, None, PROTOKOLL_FOLDER, output="tsv")
         else:
-           model = compose_response_structure(vn_nr, None, PROTOKOLL_FOLDER, output="json")
+            model = compose_response_structure(vn_nr, None, PROTOKOLL_FOLDER, output="json")
             # schlank serialisieren -> JSON (default)(keine Leerzeichen)
             plain_bytes = json.dumps(model, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
 
