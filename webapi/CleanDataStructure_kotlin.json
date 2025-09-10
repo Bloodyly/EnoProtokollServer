@@ -1,0 +1,200 @@
+{
+  "meta": {
+    "PType": "BMA",
+    "Wtype": "4Q",
+    "VNnr": "123456",
+    "Kunde": "OFD"
+  },
+  "Protokoll": {
+    "melderTypes": [
+      "AM",
+      "NAM",
+      "ZD",
+      "DB",
+      "TD",
+      "TM",
+      "LI",
+      "RAS"
+    ],
+    "anlagen": [
+      {
+        "name": "Anlage Nr 1",
+        "melder": {
+          "head": {
+            "rows": [
+              [
+                "Bereich",
+                "",
+                "Station",
+                "",
+                "Zimmer",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "Bad",
+                "",
+                "",
+                "",
+                "Kurz- zeichen"
+              ],
+              [
+                "Name",
+                "",
+                "Nummer",
+                "",
+                "Nr.",
+                "Name",
+                "",
+                "",
+                "",
+                "",
+                "Nr.",
+                "Name",
+                "",
+                "",
+                "",
+                "Abk."
+              ]
+            ],
+            "spans": [
+              {
+                "r0": 0,
+                "c0": 2,
+                "r1": 0,
+                "c1": 3,
+                "label": "Station"
+              },
+              {
+                "r0": 0,
+                "c0": 4,
+                "r1": 0,
+                "c1": 9,
+                "label": "Zimmer"
+              },
+              {
+                "r0": 0,
+                "c0": 10,
+                "r1": 0,
+                "c1": 11,
+                "label": "Bad"
+              },
+              {
+                "r0": 0,
+                "c0": 15,
+                "r1": 1,
+                "c1": 15,
+                "label": "Kurz-\nzeichen"
+              }
+            ]
+          },
+          "grid": {
+            "rowCount": 165,
+            "colCount": 16,
+            "columnsEditable": {
+              "1": "string",
+              "2": "int",
+              "3": "string",
+              "4": "bool"
+            },
+            "cells": [
+              {
+                "r": 0,
+                "c": 0,
+                "v": "intensiv",
+                "t": ""
+              },
+              {
+                "r": 0,
+                "c": 2,
+                "v": "01",
+                "t": "ZT"
+              },
+              {
+                "r": 0,
+                "c": 4,
+                "v": "Q1",
+                "t": "AT"
+              },
+              {
+                "r": 0,
+                "c": 5,
+                "v": "",
+                "t": "AT"
+              },
+              {
+                "r": 10,
+                "c": 0,
+                "v": "",
+                "t": ""
+              }
+            ]
+          }
+        },
+        "hardware": {
+          "head": {
+            "rows": [
+              [
+                "Ringkarte",
+                "Version",
+                "Unterbrechung",
+                "Störung",
+                "Funktion"
+              ]
+            ]
+          },
+          "grid": {
+            "rowCount": 4,
+            "colCount": 16,
+            "columnsEditable": {
+              "1": "string",
+              "2": "string",
+              "3": "none",
+              "4": "none",
+              "5": "none"
+            },
+            "cells": [
+              {
+                "r": 0,
+                "c": 0,
+                "v": "Ring001",
+                "t": ""
+              },
+              {
+                "r": 0,
+                "c": 1,
+                "v": "version A",
+                "t": ""
+              },
+              {
+                "r": 0,
+                "c": 2,
+                "v": "",
+                "t": ""
+              },
+              {
+                "r": 0,
+                "c": 3,
+                "v": "",
+                "t": ""
+              },
+              {
+                "r": 0,
+                "c": 4,
+                "v": "",
+                "t": ""
+              }
+            ]
+          }
+        },
+        "editedBy": {
+          "Q1": "L.Junge",
+          "Q2": "L.Junge",
+          "Q3": "",
+          "Q4": ""
+        }
+      }
+    ]
+  }
+}

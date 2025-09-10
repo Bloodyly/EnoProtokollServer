@@ -5,8 +5,8 @@ object ProtokollMapper {
     fun toConstruct(env: ProtokollEnvelope): ProtokollConstruct {
         val pType = env.meta.pType
         val wType = env.meta.wType
-        val vN = env.protokoll.VN
-        val kdn = env.protokoll.Kdn
+        val vN = env.meta.VNnr
+        val kdn = env.meta.Kunde
         val melderTypes = env.protokoll.MelderTypes
 
         val uiAnlagen = env.protokoll.Anlagen.map { anlage ->

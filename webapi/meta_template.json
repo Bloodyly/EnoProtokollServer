@@ -1,0 +1,63 @@
+
+meta_template = {
+	"protocols": {
+		"BMZ": {
+			"typeMarker": "BMA",
+			"melder": {
+				"header": {
+					"rows":1,
+					"startkey":"MG"
+					"spans": [{}],
+				},
+				"columnsEditable": {"0":"int","1":"int","2":"string"},
+				"itemsEditable":"yes"
+			},  
+			"hardware" : {
+				"header" : {
+					"rows":1,
+					"startkey":"Hardware"
+					"spans": [{}],
+				},
+				"columnsEditable": {"0":"String","3":"string","4":"string"},
+				"itemsEditable":"yes"
+			"Ausführung" : {
+				"header" : {
+					"rows":1,
+					"startkey":"Ausführung"
+					"spans": [{}],
+				},
+				"columnsEditable" : {},
+				"itemsEditable" : "no"
+			}
+		},
+		"EMA": {
+			"typeMarker": "EMA",
+			"melder": {
+				"header": {
+					"rows":1,
+					"startkey":"MG"
+					"spans": [{}],
+				},
+				"columnsEditable": {"0":"int","1":"string","2":"string"},
+				"itemsEditable":"yes"
+			},  
+			"hardware" : {
+				"header" : {
+					"rows":1,
+					"startkey":"Hardware"
+					"spans": [{}],
+				},
+				"columnsEditable": {"0":"String","3":"string","4":"string"},
+				"itemsEditable":"yes"
+			"Ausführung" : {
+				"header" : {
+					"rows":1,
+					"startkey":"Ausführung"
+					"spans": [{}],
+				},
+				"columnsEditable" : {},
+				"itemsEditable" : "no"
+			}
+		}
+	}
+}

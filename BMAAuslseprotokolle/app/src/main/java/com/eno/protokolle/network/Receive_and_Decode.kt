@@ -55,18 +55,36 @@ object ReceiveAndDecode {
     }
     // -------- Helper -------------------------------------------------------
 
+    // Loggt sehr lange Texte in Chunks (wegen Logcat-Limit) – optional mit Hard-Limit.
+    private const val MAX_DUMP_CHARS = 300_000 // Sicherheitslimit, damit Logs nicht explodieren
 
-    private fun firstLines(text: String, maxLines: Int = 5, maxCols: Int = 240): String {
-        val lines = text.split('\n')
-        val builder = StringBuilder()
-        val take = lines.size.coerceAtMost(maxLines)
-        for (i in 0 until take) {
-            val line = lines[i].trimEnd('\r')
-            val clip = if (line.length > maxCols) line.substring(0, maxCols) + " …" else line
-            builder.append(clip).append('\n')
+    private fun dumpTextToLog(
+        tag: String,
+        title: String,
+        text: String,
+        chunkSize: Int = 3000,
+        maxChars: Int = MAX_DUMP_CHARS
+    ) {
+        val s = if (text.length > maxChars) {
+            text.substring(0, maxChars) + "\n…(abgeschnitten nach ${maxChars} Zeichen)"
+        } else text
+
+        Log.w(tag, "$title — Länge=${s.length}")
+        var i = 0
+        while (i < s.length) {
+            val end = (i + chunkSize).coerceAtMost(s.length)
+            Log.w(tag, s.substring(i, end))
+            i = end
         }
-        return builder.toString().trimEnd()
     }
+    // Gibt NICHT mehr nur die ersten Zeilen zurück, sondern den ganzen Text (mit Hard-Limit).
+    private fun firstLines(text: String, maxLines: Int = Int.MAX_VALUE, maxCols: Int = Int.MAX_VALUE): String {
+        // Für Rückwärtskompatibilität bleiben die Parameter, werden aber ignoriert.
+        return if (text.length > MAX_DUMP_CHARS)
+            text.substring(0, MAX_DUMP_CHARS) + "\n…(abgeschnitten nach ${MAX_DUMP_CHARS} Zeichen)"
+        else text
+    }
+
     // -------- Key-Parsing & Krypto -----------------------------------------
 
     /**
@@ -235,8 +253,7 @@ object ReceiveAndDecode {
                     .onFailure {
                         // Bei JSON-Decode-Fehler ebenfalls die ersten 5 Zeilen loggen
                         Log.e("ReceiveHTTP", "JSON Decode fehlgeschlagen", it)
-                        val preview = firstLines(text, maxLines = 5)
-                        Log.w("ReceiveHTTP", "JSON-Preview (erste Zeilen):\n$preview")
+                        dumpTextToLog("ReceiveHTTP", "Nicht-JSON erhalten. Vollständiger Klartext", text)
                         onLog("JSON Decode fehlgeschlagen. Preview im Logcat.")
                     }
                     .getOrNull() ?: return@withContext null

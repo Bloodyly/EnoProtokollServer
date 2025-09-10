@@ -1,0 +1,33 @@
+{
+  "vn": [
+    {
+      "vn_nr": "VN123456",
+      "kunde": "OFD",
+      "filename": "Finanzamt_Dessau-Roßlau_OFD.xlsx",
+      "letzte_bearbeitung": "2025-08-12T13:10:38.071869",
+      "objekte": [
+        {
+          "name": "OFD",
+          "melder_gruppen": 371,
+          "melder_anzahl": 1186,
+          "melder_ausgeloest": 0,
+          "melder_nio": 0,
+          "intervall": "Quartal",
+          "status": "",
+          "wartung_durchfuhrender": [
+            "",
+            "",
+            "",
+            ""
+          ],
+          "wartung_datum": [
+            "",
+            "",
+            "",
+            ""
+          ]
+        }
+      ]
+    }
+  ]
+}
