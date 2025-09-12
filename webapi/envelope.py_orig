@@ -1,12 +1,15 @@
 from __future__ import annotations
 from dataclasses import dataclass, field, asdict
 from typing import List, Dict, Optional, Any
-from datetime import datetime, timezone
 import json
+from datetime import datetime, timezone
 
 @dataclass
 class Span:
-    r0: int; c0: int; r1: int; c1: int
+    r0: int
+    c0: int
+    r1: int
+    c1: int
     label: str = ""
 
 @dataclass
@@ -16,22 +19,21 @@ class Head:
 
 @dataclass
 class Cell:
-    r: int; c: int
-    v: Any = ""
-    t: Any = None
+    r: int
+    c: int
+    v: Any
 
 @dataclass
 class Grid:
-    nRows: int; nCols: int
+    nRows: int
+    nCols: int
     body: List[List[Cell]] = field(default_factory=list)
     columnsEditable: Dict[str, str] = field(default_factory=dict)
-    qStartCol: Optional[int] = None
 
 @dataclass
 class Table:
     head: Head
     grid: Grid
-    itemsEditable: bool = False
 
 @dataclass
 class Anlage:
@@ -61,30 +63,27 @@ class Protokoll:
 class Envelope:
     Meta: Meta
     Protokoll: Protokoll
+
     def to_json_bytes(self) -> bytes:
+        def default(o):
+            if hasattr(o, "__dict__"):
+                return asdict(o)
+            return str(o)
         return json.dumps(asdict(self), ensure_ascii=False, separators=(",",":")).encode("utf-8")
 
-def make_head(labels: List[str], spans: Optional[List[dict]] = None) -> Head:
-    ss = [Span(**s) for s in (spans or [])]
-    return Head(rows=[labels], spans=ss)
+def make_head(header_labels: List[str], spans: Optional[List[dict]] = None) -> Head:
+    span_objs = []
+    for s in spans or []:
+        span_objs.append(Span(**s))
+    return Head(rows=[header_labels], spans=span_objs)
 
-def make_grid(rows: List[List[Any]], columns_editable: Dict[int, str], q_start: Optional[int]) -> Grid:
+def make_grid(rows: List[List[Any]], columns_editable: Dict[int, str]) -> Grid:
     body: List[List[Cell]] = []
     for r_idx, row in enumerate(rows):
-        cells: List[Cell] = []
-        for c_idx, val in enumerate(row):
-            if q_start is not None and c_idx >= q_start:
-                if isinstance(val, tuple) and len(val) == 2:
-                    t_val, v_val = val
-                else:
-                    t_val, v_val = (val, "")
-                cells.append(Cell(r=r_idx, c=c_idx, v=v_val, t=t_val))
-            else:
-                cells.append(Cell(r=r_idx, c=c_idx, v=val))
-        body.append(cells)
-    width = max((len(r) for r in rows), default=0)
-    ce = {str(k): str(v).lower() for k, v in columns_editable.items()}
-    return Grid(nRows=len(rows), nCols=width, body=body, columnsEditable=ce, qStartCol=q_start)
+        body.append([Cell(r=r_idx, c=c_idx, v=val) for c_idx, val in enumerate(row)])
+    cols = max((len(r) for r in rows), default=0)
+    col_edit = {str(k): v for k, v in columns_editable.items()}
+    return Grid(nRows=len(rows), nCols=cols, body=body, columnsEditable=col_edit)
 
 def now_utc_iso() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00","Z")
