@@ -8,6 +8,7 @@ import kotlinx.serialization.json.JsonPrimitive
 
 @Serializable
 data class ProtokollEnvelope(
+    @SerialName("Meta")
     val meta: Meta = Meta(),
     @SerialName("Protokoll")
     val protokoll: Protokoll = Protokoll()
@@ -16,44 +17,42 @@ data class ProtokollEnvelope(
 @Serializable
 data class Meta(
     /** Anlagentyp  (BMA,EMA,ELA,LR...)*/
-    @SerialName("PType") val pType: String = "",
+    @SerialName("pType") val pType: String = "",
     /** Wartungstyp (1J, 2Q, 4Q, …) */
-    @SerialName("Wtype") val wType: String = "",
+    @SerialName("wType") val wType: String = "",
     @SerialName("VNnr") val VNnr: String = "",
     @SerialName("Kunde") val Kunde: String = ""
 )
 
 @Serializable
 data class Protokoll(
-    @SerialName("MelderTypes") val melderTypes: List<String> = emptyList(),
-    /** Immer Liste – wird im Codec ggf. aus Einzelobjekt normalisiert */
-    @SerialName("Anlagen") val anlagen: List<Anlage> = emptyList()
-)
-
-@Serializable
-data class Anlage(
-    /** z.B. "Anlage Nr 1" */
-    @SerialName("Name") val name: String = "",
-    /** Erste Tabelle (Melder)  */
-    @SerialName("Melder") val melder: Table? = null,
-    /** Zweite Tabelle (Hardware) – optional */
-    @SerialName("Hardware") val hardware: Table? = null,
-    /** Bearbeiter pro Quartal – optional */
-    @SerialName("EditedBy") val editedBy: EditedBy? = null
+    @SerialName("melderTypes") val melderTypes: List<String> = emptyList(),
+    @SerialName("anlagen") val anlagen: List<Anlage> = emptyList(),
+    @SerialName("editedBy") val editedBy: EditedBy = EditedBy()
 )
 
 @Serializable
 data class EditedBy(
-    @SerialName("Q1") val q1: String = "",
-    @SerialName("Q2") val q2: String = "",
-    @SerialName("Q3") val q3: String = "",
-    @SerialName("Q4") val q4: String = ""
+    val name: String = "",
+    /** ISO-8601, z.B. 2025-09-12T10:11:12Z */
+    val ts: String = ""
+)
+@Serializable
+data class Anlage(
+    /** z.B. "Haupthaus" (aus B4 je Blatt) */
+    @SerialName("name") val name: String = "",
+    /** Erste Tabelle (Melder)  */
+    @SerialName("melder") val melder: Table? = null,
+    /** Zweite Tabelle (Hardware) – optional */
+    @SerialName("hardware") val hardware: Table? = null
 )
 
 @Serializable
 data class Table(
     val head: Head? = null,
-    val grid: Grid = Grid()
+    val grid: Grid = Grid(),
+    /** aus meta.json (Quittierung etc.) */
+    val itemsEditable: Boolean = false
 )
 
 @Serializable
@@ -75,19 +74,16 @@ data class Span(
 
 @Serializable
 data class Grid(
-    val rowCount: Int = 0,
-    val colCount: Int = 0,
-    /**
-     * Editierbarkeit pro Spalte (Key = Spaltenindex; JSON-Keys sind Strings, werden aber als Int geparst).
-     * Werte: z.B. "string", "int", "bool", "none", …
-     */
-    val columnsEditable: Map<Int, String> = emptyMap(),
-    /**
-     * Sparse-Zellen (r=row, c=col, v=value, t=type).
-     * v ist ein JsonElement, um String/Bool/Number/null zu erlauben.
-     */
-    val cells: List<Cell> = emptyList()
-) {
+    /** Server: nRows/nCols + DICHTES body[][] */
+    @SerialName("nRows") val rowCount: Int = 0,
+    @SerialName("nCols") val colCount: Int = 0,
+    /** 2D-Zellenmatrix in Zeilen */
+    @SerialName("body") val body: List<List<Cell>> = emptyList(),
+    /** String-Keys im JSON → im Code nach Int mappen */
+    @SerialName("columnsEditable") private val columnsEditableRaw: Map<String, String> = emptyMap(),
+    /** Startindex der Quartalsspalten (0-basiert) oder null */
+    @SerialName("qStartCol") val qStartCol: Int? = null
+)  {
     /**
      * Baut eine dichte String-Matrix (rowCount × colCount) aus den sparse Zellen.
      * Nulls werden zu "", Zahlen/Bools korrekt zu String gerendert.
