@@ -128,7 +128,7 @@ def check_request():
         cfg = get_config()
         fmt = "json"
         #fmt = _pick_response_format(cfg)   # <-- statt fix aus config
-        plain_bytes = compose_response_structure(vn_nr, None, PROTOKOLL_FOLDER, output=fmt)
+        plain_bytes = compose_response_structure(vn_nr)
 
         print(f"[DEBUG] plain payload size before gzip/encrypt: {len(plain_bytes)} bytes (fmt={fmt})")
 

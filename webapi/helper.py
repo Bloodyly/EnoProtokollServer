@@ -1,8 +1,9 @@
 from pathlib import Path
 from typing import Dict, Any, List, Tuple, Optional, Literal, Iterable
-from datetime import datetime, timezone
-import json, io, os, gzip, re
-from openpyxl import load_workbook
+import json, os, gzip
+# NEU: Multi-Sheet Strict-Body Parser (Header via headerWidth, Body via descriptor/quarterCols)
+from helper_meta_parser_tv_strict_body_multi import compose_envelope_from_workbooks as _compose_envelope
+
 
 SHARED_FOLDER = "/app/shared"
 DATA_JSON = os.path.join(SHARED_FOLDER, "data.json")
@@ -11,17 +12,10 @@ PROTOKOLL_FOLDER = os.path.join(SHARED_FOLDER, "Expose", "Protokolle")
 META_JSON = os.path.join(SHARED_FOLDER, "meta.json")
 
 
-def compose_response_structure(
-    vn_nr: str,
-    _excel_template_path: Optional[str],   # wird durch data.json übersteuert
-    _protokoll_root: str,                  # wir nutzen die Konstanten oben
-    *,
-    output: Literal["json","tsv"] = "json"
-) -> bytes:
+def compose_response_structure(vn_nr: str,) -> bytes:
     """
-    Baut zuerst dein JSON-Modell und gibt es entweder
-    - als kompaktes JSON (bytes) oder
-    - als TSV (bytes) zurück.
+ Baut das neue Envelope-JSON (Multi-Anlagen, T/V-Trennung, qStartCol, itemsEditable).
+    Gibt **UTF-8 JSON bytes** zurück – direkt geeignet für Komprimierung/Verschlüsselung.
     """
 
     # 1) filename über data.json
@@ -32,81 +26,23 @@ def compose_response_structure(
     listen_path = Path(LISTEN_FOLDER) / filename
     if not listen_path.exists():
         raise FileNotFoundError(f"Listen-Datei fehlt: {listen_path}")
-
+    
+    # Optional : Protokoll Pfad festlegen
     proto_path = _resolve_protokoll_path(vn_nr, filename)  # kann None sein
 
-    # 2) Listen lesen (alle Sheets = Anlagen)
-    listen_struct, meta_from_listen = _parse_listen_workbook(listen_path)
+    # 3) meta.json
+    meta_path = Path(META_JSON)
+    if not meta_path.exists():
+        raise FileNotFoundError(f"meta.json nicht gefunden: {meta_path}")
+        
+    # 4) Envelope bauen (der Parser liest alle Blätter = Anlagen, Name aus B4)
+    return _compose_envelope(
+        str(listen_path),
+        str(proto_path) if proto_path else None,
+        str(meta_path)
+    )
 
-    # 3) Protokoll lesen (optional)
-    protokoll_struct = _parse_protokoll_workbook(proto_path) if proto_path else {}
-
-    # 4) Merge je Anlage (Sheetname = Anlagenname)
-    anlagen: List[Dict[str, Any]] = []
-    for anlagen_name, ldata in listen_struct.items():
-        groups_out: List[Dict[str, Any]] = []
-        # Map aus Protokoll: (gruppe, melder_index) -> "Q1" / "N.i.o." / "" / "-"
-        pmap = protokoll_struct.get(anlagen_name, {})
-
-        for g in ldata["Gruppen"]:
-            mg = str(g["Nummer"])
-            anz = g["Anz"]
-            art = g.get("Art") or "-"
-            melder = []
-            for idx in range(1, anz + 1):
-                # Typ aus Vorlage; ggf. "-"
-                typ = "-"
-                if g.get("MelderTypen"):
-                    j = idx - 1
-                    if 0 <= j < len(g["MelderTypen"]):
-                        typ = g["MelderTypen"][j] or "-"
-                # Auslösung aus Protokoll; normalisiert auf "-"
-                ausl = pmap.get((mg, idx), "-") or "-"
-                melder.append({
-                    "Nummer": idx,
-                    "typ": typ,
-                    "ausluesung": ausl
-                })
-            groups_out.append({
-                "Nummer": int(mg) if mg.isdigit() else mg,
-                "Art": art,
-                "Melder": melder
-            })
-
-        anlagen.append({
-            "name": anlagen_name,
-            "Gruppen": groups_out,
-            "Hardware": ldata.get("Hardware", {}),  # aus Vorlage; falls nicht vorhanden: leeres Objekt
-            "Wartung": ldata.get("Wartung", {}),    # aus Vorlage; sonst Q1..Q4-Defaults in Parser
-        })
-
-    # 5) Meta (Kunde/Wartungstyp) aus data.json oder Listen-Kopf
-    kunde, wartungstyp = _resolve_meta(vn_nr, meta_from_listen)
-
-    # 6) Meta-Header analog zu TSV (#VERSION/#GENERATED/…)
-    version = 1
-    generated = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
-
-    model: Dict[str, Any] = {
-        "Data": {
-            "Meta": {
-                "Version": version,
-                "Generated": generated,
-                "VN": _normalize_vn(vn_nr),
-                "Kunde": kunde or "-",
-                "Wartungstyp": wartungstyp or "-",
-                "Anlagen": anlagen
-            }
-        }
-    }
-
-    if output == "json":
-        # Kompakt serialisieren, damit die Nutzlast klein bleibt
-        return json.dumps(model, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
-
-    # TSV (bestehende Implementierung nutzt das Modell)
-    return _pack_tsv(model)
-# ----------------------------- Resolver -------------------------------------
+# ----------------------------- Filename Resolver -------------------------------------
 
 def _resolve_filename_from_datajson(vn_nr: str) -> Optional[str]:
     norm_vn = _normalize_vn(vn_nr)
@@ -133,189 +69,7 @@ def _normalize_vn(vn: str) -> str:
     s = (vn or "").strip().upper()
     return s if s.startswith("VN") else f"VN{s}"
 
-# ----------------------------- Parser (fest auf eure Struktur) --------------
-
-def _parse_listen_workbook(path: Path) -> Tuple[Dict[str, Any], Dict[str, str]]:
-    """
-    Pro Sheet:
-      - liest Kopfzeilen 'VN:'/'Kunde:'/'Wartung:'/'Anlage:'
-      - liest 'Melder:'-Tabelle mit Kopf 'MG' | 'Anz.' | 'Art' | 1..N
-      - erkennt wiederholte 'MG'-Kopfzeilen weiter unten automatisch
-    """
-    wb = load_workbook(filename=str(path), read_only=True, data_only=True)
-    out: Dict[str, Any] = {}
-    first_meta = {}
-
-    for ws in wb.worksheets:
-        rows = list(ws.iter_rows(values_only=True))
-        # Meta aus Top-4
-        meta = _read_top_meta(rows)
-        if not first_meta:
-            first_meta = meta.copy()
-
-        gruppen = []
-        hardware = []  # momentan nicht in Beispielen, vorbereitend gelassen
-        wartung = _wartung_defaults()  # falls nicht im Sheet vorhanden
-
-        # Tabelle(n) parsen
-        i = 0
-        in_table = False
-        while i < len(rows):
-            r = rows[i]
-            first = _s(r, 0)
-            if first == "Melder:":
-                in_table = True
-                i += 2  # nächste Zeile ist Header, überspringen
-                continue
-            if first == "MG":
-                in_table = True
-                i += 1  # Header-Zeile überspringen
-                continue
-            if in_table:
-                if _is_blank_row(r):
-                    i += 1; continue
-                mg = _s(r, 0)
-                if not mg or mg == "MG":
-                    i += 1; continue
-                anz = _int(r, 1)
-                art = _s(r, 2)
-                melder_typen = []
-                for j in range(anz):
-                    val = _s(r, 3 + j)
-                    melder_typen.append(val)
-                gruppen.append({"Nummer": mg, "Anz": anz, "Art": art, "MelderTypen": melder_typen})
-            i += 1
-
-        out[ws.title.strip() if ws.title else "-"] = {
-            "Gruppen": gruppen,
-            "Hardware": hardware,
-            "Wartung": wartung
-        }
-
-    wb.close()
-    return out, first_meta
-
-def _parse_protokoll_workbook(path: Optional[Path]) -> Dict[str, Dict[tuple, str]]:
-    """
-    Pro Sheet: Map (gruppe, melder_index) -> Auslösung/Status ("Q1","N.i.o.","", "-")
-    gleiche Tabellenform wie Listen, aber Zellen enthalten Auslösungen statt Typen.
-    """
-    if not path:
-        return {}
-    wb = load_workbook(filename=str(path), read_only=True, data_only=True)
-    out: Dict[str, Dict[tuple, str]] = {}
-
-    for ws in wb.worksheets:
-        rows = list(ws.iter_rows(values_only=True))
-        amap: Dict[tuple, str] = {}
-        i = 0
-        in_table = False
-        while i < len(rows):
-            r = rows[i]
-            first = _s(r, 0)
-            if first == "Melder:":
-                in_table = True
-                i += 2; continue
-            if first == "MG":
-                in_table = True
-                i += 1; continue
-            if in_table:
-                if _is_blank_row(r):
-                    i += 1; continue
-                mg = _s(r, 0)
-                if not mg or mg == "MG":
-                    i += 1; continue
-                anz = _int(r, 1)
-                for j in range(anz):
-                    val = _s(r, 3 + j)
-                    amap[(mg, j+1)] = (val or "-")
-            i += 1
-
-        out[ws.title.strip() if ws.title else "-"] = amap
-
-    wb.close()
-    return out
-
-def _read_top_meta(rows) -> Dict[str, str]:
-    meta = {}
-    # erwartet Zeilen:
-    # ['VN:', <num>], ['Kunde:', <text>], ['Wartung:', <text>], ['Anlage:', <sheetname>]
-    for k in range(0, min(6, len(rows))):
-        key = _s(rows[k], 0)
-        val = _s(rows[k], 1)
-        if key.endswith(":"):
-            meta[key[:-1]] = val
-    return meta
-
-# ----------------------------- TSV-Packer -----------------------------------
-
-def _pack_tsv(model: Dict[str, Any]) -> bytes:
-    meta = model["Data"]["Meta"]
-    lines: List[List[str]] = []
-    lines.append(["#VERSION","1"])
-    lines.append(["#GENERATED", datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")])
-    lines.append(["#VN", meta.get("VN","-"), meta.get("Kunde","-"), meta.get("Wartungstyp","-")])
-
-    for anlage in meta.get("Anlagen", []):
-        lines.append(["#ANLAGE", anlage.get("name","-")])
-        lines.append(["#COLUMNS_GM","gruppe_nummer","gruppe_art","melder_nummer","melder_typ","ausluesung"])
-        for g in anlage.get("Gruppen", []):
-            gnr = g.get("Nummer","-")
-            gart= g.get("Art","-")
-            for m in g.get("Melder", []):
-                lines.append([
-                    str(gnr), str(gart),
-                    str(m.get("Nummer","-")),
-                    str(m.get("typ","-")),
-                    str(m.get("ausluesung","-"))
-                ])
-        # (Hardware/Wartung Sektionen leicht ergänzbar – aktuell leer/Defaults)
-
-    buf = io.StringIO()
-    for line in lines:
-        buf.write("\t".join("" if v is None else str(v) for v in line) + "\n")
-    return buf.getvalue().encode("utf-8")
-
 # ----------------------------- Meta & Utils ---------------------------------
-
-def _resolve_meta(vn_nr: str, meta_from_listen: Dict[str, str]) -> Tuple[str, str]:
-    kunde = ""
-    wartung = ""
-    if os.path.exists(DATA_JSON):
-        with open(DATA_JSON, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        for e in data.get("vn", []):
-            if _normalize_vn(e.get("vn_nr","")) == _normalize_vn(vn_nr):
-                kunde = e.get("kunde","") or ""
-                if e.get("objekte"):
-                    wartung = e["objekte"][0].get("intervall","") or ""
-                break
-    if not kunde:
-        kunde = meta_from_listen.get("Kunde","")
-    if not wartung:
-        wartung = meta_from_listen.get("Wartung","")
-    return kunde, wartung
-
-def _s(row, idx) -> str:
-    if not row or idx >= len(row) or row[idx] is None: return ""
-    return str(row[idx]).strip()
-
-def _int(row, idx) -> int:
-    s = _s(row, idx)
-    if not s: return 0
-    try:
-        return int(float(s))
-    except Exception:
-        return 0
-
-def _is_blank_row(row) -> bool:
-    return not row or all(c is None or str(c).strip()=="" for c in row)
-
-def _wartung_defaults() -> List[Dict[str,str]]:
-    return [{"typ":"Q1","Durch":"","datum":""},
-            {"typ":"Q2","Durch":"","datum":""},
-            {"typ":"Q3","Durch":"","datum":""},
-            {"typ":"Q4","Durch":"","datum":""}]
 
 def maybe_compress_then_encrypt(
     plain_bytes: bytes,
