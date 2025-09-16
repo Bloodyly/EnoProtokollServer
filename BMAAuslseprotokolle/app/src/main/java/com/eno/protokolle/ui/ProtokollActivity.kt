@@ -4,51 +4,77 @@ import android.os.Bundle
 import android.widget.ImageButton
 import android.widget.Spinner
 import android.widget.TextView
-import androidx.activity.ComponentActivity
-import com.google.android.material.bottomappbar.BottomAppBar
-import com.google.android.material.floatingactionbutton.FloatingActionButton
-import com.google.android.material.tabs.TabLayout
-import com.inqbarna.tablefixheaders.TableFixHeaders
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import androidx.activity.viewModels
+import androidx.viewpager2.widget.ViewPager2
+import androidx.viewpager2.adapter.FragmentStateAdapter
 import com.eno.protokolle.R
+import com.eno.protokolle.network.ProtokollStorage
+import com.eno.protokolle.newmodel.ProtokollMapper
 import com.eno.protokolle.newmodel.UiAnlage
+import com.google.android.material.tabs.TabLayout
+import com.google.android.material.tabs.TabLayoutMediator
+import kotlinx.serialization.json.Json
 
-class ProtokollActivity : ComponentActivity() {
 
-    // Titel-Leiste
+
+class ProtokollActivity : AppCompatActivity(R.layout.layout_protokoll) {
+
+    companion object {
+        const val EXTRA_VN = "EXTRA_VN"   // optionaler Key zum gezielten Laden
+    }
+
     private lateinit var textCustomer: TextView
     private lateinit var textVertragsnummer: TextView
     private lateinit var buttonEdit: ImageButton
     private lateinit var buttonMenu: ImageButton
-
-    // Tabs & Tabelle
-    private lateinit var tabLayoutAnlagen: TabLayout
-    private lateinit var tableFix: TableFixHeaders
-
-    // Bottom + FABs + Spinner
-    private lateinit var bottomAppBar: BottomAppBar
-    private lateinit var fabDone: FloatingActionButton
-    private lateinit var textFabMain: TextView
-    private lateinit var textDefect: TextView
-    private lateinit var textQ1: TextView
-    private lateinit var textQ2: TextView
-    private lateinit var textQ3: TextView
-    private lateinit var textQ4: TextView
     private lateinit var spinnerMelderTyp: Spinner
+    private lateinit var tabLayout: TabLayout
+    private lateinit var pager: ViewPager2
 
-    private var tableAdapter: TableAnlageAdapter? = null
-
-    // TODO: ersetze durch echte Daten (Mapper → Construct → anlagen)
-    private val demoAnlagen: List<UiAnlage> = emptyList()
+    private val vm: ProtokollViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.layout_protokoll) // dein XML
 
         bindViews()
-        initUiBasics()
+        // Wischen zwischen Tabs deaktivieren – nur Klick auf Tab erlaubt
+        pager.isUserInputEnabled = false
 
-        // Tabs + Tabelle initialisieren
-        setupTabsAndTable(demoAnlagen)
+        // 1) Protokoll aus Storage laden (per EXTRA_VN oder "neueste")
+        val key = intent.getStringExtra(EXTRA_VN)
+        val env = if (key != null) {
+            ProtokollStorage.load(this, key)
+        } else {
+            ProtokollStorage.loadLatest(this)?.second
+        }
+
+        if (env == null) {
+            Toast.makeText(this, "Kein gespeichertes Protokoll gefunden.", Toast.LENGTH_SHORT).show()
+            finish()
+            return
+        }
+        // DEbug der Anlagen
+        android.util.Log.d("Protokoll", "Srv anlagen=" +
+                env.protokoll.anlagen.joinToString { it.name })
+
+        // 2) Envelope -> UI-Modell mappen
+        val construct = ProtokollMapper.toConstruct(env)
+        vm.construct = construct
+        //DEbug der Anlagen Nach Decoding
+        android.util.Log.d("Protokoll", "UI anlagen=" +
+                construct.anlagen.joinToString { it.name })
+
+        // 3) Titelzeile füllen
+        textCustomer.text = construct.kdn
+        textVertragsnummer.text = "VN: ${construct.vN}"
+
+        // 4) Tabs + Pager mit Anlagen
+        setupPager()
+
+        // 5) Buttons/Spinner wie gehabt
+        initUiBasics(construct)
     }
 
     private fun bindViews() {
@@ -56,93 +82,35 @@ class ProtokollActivity : ComponentActivity() {
         textVertragsnummer = findViewById(R.id.textVertragsnummer)
         buttonEdit = findViewById(R.id.buttonEdit)
         buttonMenu = findViewById(R.id.buttonMenu)
-
-        tabLayoutAnlagen = findViewById(R.id.tabLayoutAnlagen)
-        tableFix = findViewById(R.id.tableFix)
-
-        bottomAppBar = findViewById(R.id.bottomAppBar)
-        fabDone = findViewById(R.id.fabDone)
-        textFabMain = findViewById(R.id.textFabMain)
-        textDefect = findViewById(R.id.textDefect)
-        textQ1 = findViewById(R.id.textQ1)
-        textQ2 = findViewById(R.id.textQ2)
-        textQ3 = findViewById(R.id.textQ3)
-        textQ4 = findViewById(R.id.textQ4)
         spinnerMelderTyp = findViewById(R.id.spinnerMelderTyp)
+        tabLayout = findViewById(R.id.tabLayoutAnlagen)
+        pager = findViewById(R.id.pagerAnlagen)
     }
 
-    private fun initUiBasics() {
-        // Beispiel-Befüllung der Kopfzeile – ersetze mit echten Werten
-        textCustomer.text = "Kunde XY"
-        textVertragsnummer.text = "VN: 123456"
+    private fun setupPager() {
+        val anlagen = vm.construct?.anlagen ?: emptyList()
 
-        // einfache Clicks (kannst du später mit Logik füllen)
-        buttonEdit.setOnClickListener { /* TODO: Edit-Modus */ }
-        buttonMenu.setOnClickListener { /* TODO: Menü */ }
-        fabDone.setOnClickListener { /* TODO: Speichern/Senden */ }
-
-        textFabMain.setOnClickListener { toggleQuarterButtons(true) }
-        // Wenn man einen Quartals-Button antippt, wieder einklappen:
-        val collapse = { toggleQuarterButtons(false) }
-        textDefect.setOnClickListener { collapse() }
-        textQ1.setOnClickListener { collapse() }
-        textQ2.setOnClickListener { collapse() }
-        textQ3.setOnClickListener { collapse() }
-        textQ4.setOnClickListener { collapse() }
-    }
-
-    private fun toggleQuarterButtons(show: Boolean) {
-        val v = if (show) android.view.View.VISIBLE else android.view.View.INVISIBLE
-        textDefect.visibility = v
-        textQ1.visibility = v
-        textQ2.visibility = v
-        textQ3.visibility = v
-        textQ4.visibility = v
-    }
-
-    private fun setupTabsAndTable(anlagen: List<UiAnlage>) {
-        tabLayoutAnlagen.removeAllTabs()
-
-        if (anlagen.isEmpty()) {
-            // leere Tabelle anzeigen
-            val headers = listOf("Nr.", "Bereich", "Text", "Status", "Zeit")
-            tableAdapter = TableAnlageAdapter(headers, emptyList(), emptyList())
-            tableFix.setAdapter(tableAdapter)
-            return
+        pager.adapter = object : FragmentStateAdapter(this) {
+            override fun getItemCount() = anlagen.size
+            override fun createFragment(position: Int) =
+                AnlagePageFragment.new(position)   // <<--- NUR den Index übergeben
         }
 
-        anlagen.forEachIndexed { index, anlage ->
-            val title = anlage.name.ifBlank { "Anlage ${index + 1}" }
-            tabLayoutAnlagen.addTab(tabLayoutAnlagen.newTab().setText(title), index == 0)
-        }
-
-        tabLayoutAnlagen.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
-            override fun onTabSelected(tab: TabLayout.Tab) {
-                bindAnlage(anlagen[tab.position])
-            }
-            override fun onTabUnselected(tab: TabLayout.Tab) {}
-            override fun onTabReselected(tab: TabLayout.Tab) {}
-        })
-
-        // initial
-        bindAnlage(anlagen.first())
+        TabLayoutMediator(tabLayout, pager) { tab, pos ->
+            tab.text = anlagen[pos].name.ifBlank { "Anlage ${pos + 1}" }
+        }.attach()
     }
 
-    private fun bindAnlage(anlage: UiAnlage) {
-        val headers = listOf("Nr.", "Bereich", "Text", "Status", "Zeit")
-        val rowCount = anlage.melder.rows.size
-        val left = List(rowCount) { (it + 1).toString() }
-        val rows = anlage.melder.rows.map { r ->
-            if (r.size >= headers.size) r.take(headers.size)
-            else r + List(headers.size - r.size) { "" }
+    private fun initUiBasics(construct: com.eno.protokolle.newmodel.ProtokollConstruct) {
+        // TODO: Spinner für construct.melderTypes füllen, FAB-Logik je nach aktuellem Tab etc.
+        // Beispiel:
+        // spinnerMelderTyp.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, construct.melderTypes)
+        buttonEdit.setOnClickListener {
+            val currentAnlage = construct.anlagen.getOrNull(pager.currentItem)
+            // TODO: Editor öffnen für aktuelle Anlage
         }
-
-        if (tableAdapter == null) {
-            tableAdapter = TableAnlageAdapter(headers, left, rows)
-            tableFix.setAdapter(tableAdapter)
-        } else {
-            tableAdapter!!.update(headers, left, rows)
-            tableAdapter!!.notifyDataSetChanged()
+        buttonMenu.setOnClickListener {
+            // TODO: Menü
         }
     }
 }

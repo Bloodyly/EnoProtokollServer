@@ -2,9 +2,11 @@ package com.eno.protokolle.newmodel
 
 data class UiTable(
     val header: List<List<String>>,
-    val spans: List<HeadSpan>?,           // aus Transportstruktur übernommen
-    val rows: List<List<String>>,         // dichter Body als Strings (Grid bereits expandiert)
-    val editors: Map<Int, ProtokollCodec.EditKind> // 0-basierte Spalten → Editortyp
+    val spans: List<Span>?,
+    val rows: List<List<String>>,
+    val editors: Map<Int, ProtokollCodec.EditKind>,
+    val qStartCol: Int?,           // NEU: Grenze zwischen Descriptor und Quartal
+    val itemsEditable: Boolean     // NEU: aus Server-Meta
 )
 
 data class UiAnlage(

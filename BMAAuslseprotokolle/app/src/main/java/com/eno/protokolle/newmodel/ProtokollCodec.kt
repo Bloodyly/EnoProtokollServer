@@ -14,10 +14,11 @@ object ProtokollCodec {
         ignoreUnknownKeys = true
         isLenient = true
         encodeDefaults = true
+        explicitNulls = false
     }
 
     fun decode(jsonText: String): ProtokollEnvelope =
-        json.decodeFromString(jsonText)
+        json.decodeFromString(ProtokollEnvelope.serializer(), jsonText)
 
     fun encode(envelope: ProtokollEnvelope): String =
         json.encodeToString(envelope)
@@ -31,8 +32,8 @@ object ProtokollCodec {
     fun Grid.columnsEditableAsIntMap(defaultKind: EditKind = EditKind.melderType): Map<Int, EditKind> {
         val out = mutableMapOf<Int, EditKind>()
         // definierte Spalten
-        for ((k, v) in columnsEditable) {
-            val idx = k.toIntOrNull() ?: continue
+        for ((kStr, v) in columnsEditable) {
+            val idx = kStr
             out[idx] = v.toEditKind(defaultKind)
         }
         // fehlende Spalten -> Default
@@ -53,25 +54,7 @@ object ProtokollCodec {
      * Sparse -> dichte Body-Matrix (Strings), gut fürs Rendern/Speichern.
      * Leere Zellen -> "".
      */
-    fun Grid.buildDenseBodyAsString(): List<List<String>> {
-        val body = Array(rowCount) { Array(colCount) { "" } }
-        for (cell in cells) {
-            val rr = cell.r
-            val cc = cell.c
-            if (rr !in 0 until rowCount || cc !in 0 until colCount) continue
-            body[rr][cc] = when (val v = cell.v) {
-                null -> ""
-                is JsonNull -> ""
-                is JsonPrimitive -> when {
-                    v.isString -> v.content
-                    v.booleanOrNull != null -> v.boolean.toString()
-                    v.longOrNull != null -> v.long.toString()
-                    v.doubleOrNull != null -> v.double.toString()
-                    else -> v.toString()
-                }
-                else -> v.toString()
-            }
-        }
-        return body.map { it.toList() }
-    }
+    /** Delegiert auf das dichte Grid des neuen Models. */
+    fun Grid.buildDenseBodyAsString(): List<List<String>> = asDenseBodyStrings()
 }
+

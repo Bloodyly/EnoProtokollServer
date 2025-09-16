@@ -5,6 +5,12 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.boolean
+import kotlinx.serialization.json.booleanOrNull
+import kotlinx.serialization.json.double
+import kotlinx.serialization.json.doubleOrNull
+import kotlinx.serialization.json.long
+import kotlinx.serialization.json.longOrNull
 
 @Serializable
 data class ProtokollEnvelope(
@@ -83,40 +89,40 @@ data class Grid(
     @SerialName("columnsEditable") private val columnsEditableRaw: Map<String, String> = emptyMap(),
     /** Startindex der Quartalsspalten (0-basiert) oder null */
     @SerialName("qStartCol") val qStartCol: Int? = null
-)  {
-    /**
-     * Baut eine dichte String-Matrix (rowCount × colCount) aus den sparse Zellen.
-     * Nulls werden zu "", Zahlen/Bools korrekt zu String gerendert.
-     */
-    fun buildDenseBodyAsString(): List<List<String>> {
-        val body = Array(rowCount) { Array(colCount) { "" } }
-        for (cell in cells) {
-            val rr = cell.r
-            val cc = cell.c
-            if (rr !in 0 until rowCount || cc !in 0 until colCount) continue
-            val v = cell.v
-            body[rr][cc] = when (v) {
-                null, is JsonNull -> ""
-                is JsonPrimitive -> when {
-                    v.isString -> v.content
-                    v.booleanOrNull != null -> v.boolean.toString()
-                    v.longOrNull != null -> v.long.toString()
-                    v.doubleOrNull != null -> v.double.toString()
+)   {
+    /** Bequemer Zugriff als Int-Map */
+    val columnsEditable: Map<Int, String> by lazy {
+        columnsEditableRaw.mapNotNull { (k, v) -> k.toIntOrNull()?.let { it to v } }.toMap()
+    }
+
+    /** Dichtes String-Body (falls UI Strings erwartet) */
+    fun asDenseBodyStrings(): List<List<String>> =
+        body.map { row ->
+            row.map { cell ->
+                when (val v = cell.v) {
+                    null, is JsonNull -> ""
+                    is JsonPrimitive -> when {
+                        v.isString -> v.content
+                        v.booleanOrNull != null -> v.boolean.toString()
+                        v.longOrNull != null -> v.long.toString()
+                        v.doubleOrNull != null -> v.double.toString()
+                        else -> v.toString()
+                    }
                     else -> v.toString()
                 }
-                else -> v.toString()
             }
         }
-        return body.map { it.toList() }
-    }
+
+    fun isQuarterCol(c: Int): Boolean = qStartCol?.let { c >= it } ?: false
+    fun isEditableCol(c: Int): Boolean = columnsEditable.containsKey(c)
 }
 
 @Serializable
 data class Cell(
     val r: Int,
     val c: Int,
-    /** in JSON kann das string/number/bool/null sein */
+    /** v: Ist/Anzeige; in Quartalsspalten aus PROTOKOLL */
     val v: JsonElement? = null,
-    /** optionaler Typ-Hinweis aus der Quelle (z.B. "AT","ZT",...) */
-    val t: String? = null
+    /** t: Soll/Typ; in Quartalsspalten aus LISTE, sonst null */
+    val t: JsonElement? = null
 )
