@@ -1,79 +1,68 @@
 {
-  "schemaVersion": "1.0",
-  "defaults": {
-    "headerScanMaxRows": 8,            // wie weit wir maximal scannen
-    "dashTokens": ["-", "—", "–", ""],
-    "dashRegex": [
-      "^-+$",             // eine oder mehrere Bindestriche
-      "^[—–-]{3,}$",      // 3+ beliebige Strich-Varianten
-      "^\\.+$"            // nur Punkte (........)
-  },
-  "types": {
-    "Brandmelde": {
-		"excel": {
-			"typeMarker": { "label": "BMA", "row": 5, "col": 2 }, // 1-basiert in Excel-UI (A1)
-			"header": { "rows": 1, "startRow": 7 },                      // Zeilen 1–4 sind Header
-			"body":   { "startRow": 8 }                                   // ab Zeile 5 ist Body
-			"dash": {
-				"tokens": ["-", "—", "–", ""],
-				"regex": ["^-+$", "^[—–-]{3,}$", "^\\.+$"]
-			}
-		},
-		"payload": {
-			"Types": { "AM", "NAM", "ZD", "Tdiff", "Tmax", "RAS", "Linear"}, // Auswählbare typen für den Editor
-			"protocol": "Brandmelde",
-			"normalizeHeaderWhitespace": true,
-			"emitMergedSpans": false
-		}
-    },
-	"Einbruchmelde": {
-		"excel": {
-			"typeMarker": { "label": "EMA", "row": 5, "col": 2 },// 1-Basiert in Excel-UI (A1)
-			"header": { "rows": 2, "startRow": 7 },                      // Beispiel: 2-zeiliger Kopf
-			"body":   { "startRow": 9 }
-			"dash": {
-				"tokens": ["-", "—", "–", ""],
-				"regex": ["^-+$", "^[—–-]{3,}$", "^\\.+$"]
-			}
-		},
-		"payload": {
-			"Types": { "BWM", "RSK", "MKT", "GB", "ÜT", "Schall"}, // Auswählbare typen für den Editor
-			"protocol": "EMA",
-			"normalizeHeaderWhitespace": true,
-			"emitMergedSpans": true                                       // Lichtruf hat oft Spans
-		}		  
-	},
-    "Lichtruf": {
-		"excel": {
-			"typeMarker": { "label": "Lichtruf", "row": 5, "col": 2 },// 1-Basiert in Excel-UI (A1)
-			"header": { "rows": 2, "startRow": 7 },                      // Beispiel: 2-zeiliger Kopf
-			"body":   { "startRow": 9 }
-			"dash": {
-				"tokens": ["-", "—", "–", ""],
-				"regex": ["^-+$", "^[—–-]{3,}$", "^\\.+$"]
-			}
-		},
-		"payload": {
-			"Types": { "AT", "RT", "RAT", "ZM", "BT", "ZT", "LCD"}, // Auswählbare typen für den Editor
-			"protocol": "Lichtruf",
-			"normalizeHeaderWhitespace": true,
-			"emitMergedSpans": true                                       // Lichtruf hat oft Spans
-		}		  
-	},
-	"Notlicht": {
-		"excel": {
-			"typeMarker": { "label": "Lichtruf", "row": 5, "col": 2 },
-			"header": { "rows": 2, "startRow": 7 },                      // Beispiel: 2-zeiliger Kopf
-			"body":   { "startRow": 9 }
-			"dash": {
-				"tokens": ["-", "—", "–", ""],
-				"regex": ["^-+$", "^[—–-]{3,}$", "^\\.+$"]
-			}
-		},
-		"payload": {
-			"Types": { "EL", "BL", "NL", "Pikto" }, // Auswählbare typen für den Editor	 
-			"protocol": "Lichtruf",
-			"normalizeHeaderWhitespace": true,
-			"emitMergedSpans": true                                       // Lichtruf hat oft Spans
-	}
+  "protocols": {
+    "BMZ": {
+      "typeMarker": "BMA",
+      "melder": {
+        "header": {
+          "rows": 1,
+          "startkey": "MG",
+          "spans": []
+        },
+        "columnsEditable": {
+          "0": "int",
+          "1": "int",
+          "2": "string"
+        },
+        "itemsEditable": "yes",
+        "qStartCol": 3
+      },
+      "hardware": {
+        "header": {
+          "rows": 1,
+          "startkey": "Hardware",
+          "spans": []
+        },
+        "columnsEditable": {
+          "0": "string",
+          "14": "string",
+          "20": "string"
+        },
+        "itemsEditable": "yes",
+        "layout": {
+          "headerStartCol": 1,
+          "headerWidth": 21,
+          "descriptorCols": [
+            0,
+            14,
+            20
+          ],
+          "quarterCols": [
+            3,
+            9
+          ]
+        }
+      },
+      "Ausführung": {
+        "header": {
+          "rows": 1,
+          "startkey": "Ausführung",
+          "spans": []
+        },
+        "columnsEditable": {},
+        "itemsEditable": "no",
+        "layout": {
+          "headerStartCol": 1,
+          "headerWidth": 21,
+          "descriptorCols": [
+            0,
+            2,
+            5,
+            11,
+            16
+          ],
+          "quarterCols": []
+        }
+      }
+    }
+  }
 }
