@@ -9,7 +9,7 @@ SHARED_FOLDER = "/app/shared"
 DATA_JSON = os.path.join(SHARED_FOLDER, "data.json")
 LISTEN_FOLDER = os.path.join(SHARED_FOLDER, "Expose", "Listen")
 PROTOKOLL_FOLDER = os.path.join(SHARED_FOLDER, "Expose", "Protokolle")
-META_JSON = os.path.join(SHARED_FOLDER, "meta.json")
+META_JSON = "/app/meta.json"
 
 
 def compose_response_structure(vn_nr: str,) -> bytes:
