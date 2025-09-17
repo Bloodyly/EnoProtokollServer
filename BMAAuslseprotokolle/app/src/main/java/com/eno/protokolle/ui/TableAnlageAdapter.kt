@@ -7,7 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.core.view.setPadding
-import com.inqbarna.tablefixheaders.adapters.BaseTableAdapter
+import com.celerysoft.tablefixheaders.adapter.BaseTableAdapter
 
 class TableAnlageAdapter(
     private var headers: List<String>,         // Spaltenüberschriften (ohne linke Kopfspalte)
@@ -69,6 +69,26 @@ class TableAnlageAdapter(
 
     // Optional aber oft von der Lib erwartet – 1 View-Typ reicht uns:
     override fun getViewTypeCount(): Int = 1
+    override fun getBackgroundResId(p0: Int, p1: Int): Int {
+        TODO("Not yet implemented")
+    }
+
+    override fun getBackgroundHighlightResId(p0: Int, p1: Int): Int {
+        TODO("Not yet implemented")
+    }
+
+    override fun getItem(p0: Int, p1: Int): Any? {
+        TODO("Not yet implemented")
+    }
+
+    override fun getItemId(p0: Int, p1: Int): Long {
+        TODO("Not yet implemented")
+    }
+
+    override fun isRowSelectable(p0: Int): Boolean {
+        TODO("Not yet implemented")
+    }
+
     override fun getItemViewType(row: Int, column: Int): Int = 0
 
     private fun dpToPx(dp: Int): Int =

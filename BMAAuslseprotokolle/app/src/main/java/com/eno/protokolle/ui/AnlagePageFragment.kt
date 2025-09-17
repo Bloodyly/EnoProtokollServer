@@ -7,7 +7,7 @@ import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import com.eno.protokolle.R
-import com.inqbarna.tablefixheaders.TableFixHeaders
+import com.celerysoft.tablefixheaders.TableFixHeaders
 
 class AnlagePageFragment : Fragment(R.layout.frag_anlage_page) {
 
