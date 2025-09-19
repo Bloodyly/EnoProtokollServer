@@ -93,7 +93,8 @@ class ProtokollActivity : AppCompatActivity(R.layout.layout_protokoll) {
         pager.adapter = object : FragmentStateAdapter(this) {
             override fun getItemCount() = anlagen.size
             override fun createFragment(position: Int) =
-                AnlagePageFragment.new(position)   // <<--- NUR den Index übergeben
+                AnlagePageFragmentFixed.new(position) // zum Testen
+            // später wieder: AnlagePageFragment.new(position)
         }
 
         TabLayoutMediator(tabLayout, pager) { tab, pos ->
