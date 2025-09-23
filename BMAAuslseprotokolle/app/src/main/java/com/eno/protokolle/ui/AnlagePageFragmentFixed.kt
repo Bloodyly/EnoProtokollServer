@@ -11,7 +11,7 @@ import com.github.zardozz.FixedHeaderTableLayout.FixedHeaderTableLayout
 class AnlagePageFragmentFixed : Fragment(R.layout.frag_anlage_page_fixed) {
 
     companion object {
-        private const val KEY_INDEX = "anlage_index" // gleich wie im alten Fragment
+        private const val KEY_INDEX = "anlage_index"
         fun new(index: Int) = AnlagePageFragmentFixed().apply {
             arguments = bundleOf(KEY_INDEX to index)
         }
@@ -22,21 +22,18 @@ class AnlagePageFragmentFixed : Fragment(R.layout.frag_anlage_page_fixed) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val index = requireArguments().getInt(KEY_INDEX)
         val construct = vm.construct ?: return
+        val index = requireArguments().getInt(KEY_INDEX)
         val anlage = construct.anlagen.getOrNull(index) ?: return
 
-        val renderer = EnvelopeFixedTable(requireContext())
+        val table = view.findViewById<FixedHeaderTableLayout>(R.id.tableCombined)
 
-        val melder = view.findViewById<FixedHeaderTableLayout>(R.id.tableMelder)
-        renderer.renderInto(melder, anlage.melder)
-
-        val hw = view.findViewById<FixedHeaderTableLayout>(R.id.tableHardware)
-        if (anlage.hardware != null) {
-            renderer.renderInto(hw, anlage.hardware)
-            hw.visibility = View.VISIBLE
-        } else {
-            hw.visibility = View.GONE
+        val sections = buildList {
+            add(UiTableSection("Melder", anlage.melder))
+            anlage.hardware?.let { add(UiTableSection("Hardware", it)) }
         }
+
+        MultiSectionFixedTable(requireContext(), textSizeSp = 14f, rowHeightDp = 40, padHDp = 8)
+            .renderInto(table, sections)
     }
 }
