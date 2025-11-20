@@ -6,7 +6,11 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <com.github.zardozz.FixedHeaderTableLayout.FixedHeaderTableLayout
+    <!-- vorher -->
+    <!-- <com.github.zardozz.FixedHeaderTableLayout.FixedHeaderTableLayout ... /> -->
+
+    <!-- nachher -->
+    <com.eno.protokolle.ui.widget.FixedHeaderTableLayoutWithFling
         android:id="@+id/tableCombined"
         android:layout_width="match_parent"
         android:layout_height="match_parent"

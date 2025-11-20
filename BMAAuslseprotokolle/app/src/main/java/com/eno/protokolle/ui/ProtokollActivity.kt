@@ -16,6 +16,10 @@ import com.eno.protokolle.newmodel.UiAnlage
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
 import kotlinx.serialization.json.Json
+import android.view.*
+import android.widget.OverScroller
+import androidx.core.view.ViewCompat
+import kotlin.math.max
 
 
 
@@ -115,3 +119,4 @@ class ProtokollActivity : AppCompatActivity(R.layout.layout_protokoll) {
         }
     }
 }
+

@@ -19,12 +19,29 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:theme="@style/Theme.BMAAuslöseprotokolle" >
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
+            android:theme="@style/Theme.BMAAuslöseprotokolle">
 
-                <category android:name="android.intent.category.LAUNCHER" />
+
+            <!-- Launcher -->
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+
+
+            <!-- Deep Link: eno://protokoll?vn=123 oder eno://protokoll/123 oder https://protokoll.local/open?vn=123 -->
+            <intent-filter android:autoVerify="false">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:scheme="http"
+                    android:host="eno-nt.net"
+                    android:port="5000"
+                    android:pathPrefix="/protokoll" />
+            </intent-filter>
+
         </activity>
         <activity
             android:name=".ui.IntroActivity"
